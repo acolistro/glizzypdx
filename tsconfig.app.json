@@ -1,0 +1,45 @@
+{
+  // This config governs everything under src/ — your actual app code.
+  // It's split from tsconfig.node.json because the app runs in the browser
+  // (needs "DOM" types) while config files run in Node (needs "Node" types).
+  // Vite's default scaffold does this split; we're following the same convention.
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode — tells TS that Vite (not tsc) handles the actual module
+       resolution and transpilation. TS is only used here for type-checking. */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Strict type-checking. We do NOT use "any" anywhere in this project
+       (see project rules), so strict mode is non-negotiable — it's what
+       catches the mistakes "any" would otherwise hide. */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+
+    /* Path alias: lets you write `import { supabase } from "@/lib/supabase"`
+       instead of `import { supabase } from "../../../lib/supabase"`.
+       Mirrored in vite.config.ts (resolve.alias) — both must stay in sync
+       or the alias will work in the editor but fail at build time.
+       No baseUrl needed: with moduleResolution "bundler", path values
+       resolve relative to this tsconfig file's own location by default.
+       (baseUrl is deprecated as of TypeScript 6 and would stop working
+       in TS 7 — omitting it entirely is the permanent fix, not a
+       workaround.) */
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src"]
+}

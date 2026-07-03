@@ -1,0 +1,18 @@
+{
+  // This config governs config files that run in Node, not the browser —
+  // right now that's just vite.config.ts. Separate from tsconfig.app.json
+  // because Node has different global types (e.g. `process`) than the DOM.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "strict": true
+  },
+  "include": ["vite.config.ts"]
+}

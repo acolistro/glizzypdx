@@ -1,0 +1,14 @@
+/*
+  Placeholder styling only. Real visual design (GeoCities Hotdog Stand
+  direction — see design system tokens ticket) replaces this once the
+  design tokens are established. Deliberately not building real styles
+  here so we don't end up retrofitting the token system into ad-hoc CSS
+  later, per the "tokens before components" decision.
+*/
+main {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  font-family: sans-serif;
+  text-align: center;
+}

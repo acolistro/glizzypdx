@@ -1,4 +1,3 @@
-cat > .github/workflows/ci.yml << 'EOF'
 name: CI
 
 on:
@@ -16,23 +15,48 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
 
+      # Must run BEFORE actions/setup-node — pnpm needs to exist on the
+      # runner before setup-node's `cache: pnpm` option can detect it and
+      # find the lockfile to key the cache off of. Version is read from
+      # package.json's "packageManager" field automatically, so it stays
+      # in sync with what's actually used locally without hardcoding a
+      # version number here too (one source of truth instead of two).
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
+          # Reads the version from .nvmrc instead of hardcoding it here —
+          # keeps CI and local dev on the exact same Node version with one
+          # file to update instead of two drifting out of sync.
+          node-version-file: ".nvmrc"
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci
+        # --frozen-lockfile fails the install instead of silently updating
+        # pnpm-lock.yaml if it's out of sync with package.json — CI should
+        # never modify the lockfile, only verify it's correct.
+        run: pnpm install --frozen-lockfile
 
       - name: Lint
-        run: npm run lint
+        run: pnpm lint
 
       - name: Type check
-        run: npx tsc --noEmit
+        # `tsc -b` (build mode), not `tsc --noEmit` — this project uses
+        # TypeScript project references (tsconfig.json points to
+        # tsconfig.app.json + tsconfig.node.json), which -b understands
+        # and --noEmit alone does not resolve correctly. noEmit is already
+        # set inside both referenced tsconfigs, so this only type-checks,
+        # it doesn't write any output files.
+        run: pnpm exec tsc -b
 
       - name: Run unit & integration tests with coverage
-        run: npm run test:coverage
+        # Coverage thresholds are enforced inside vite.config.ts's
+        # test.coverage.thresholds block — `vitest run --coverage` (which
+        # this script wraps) exits non-zero on its own if coverage drops
+        # below them, so no extra CI-side threshold check is needed here.
+        run: pnpm coverage
 
       - name: Upload coverage report
         if: always()
@@ -52,22 +76,37 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
+          node-version-file: ".nvmrc"
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium firefox webkit
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
 
-      - name: Run E2E tests against preview deployment
-        run: npx playwright test
-        env:
-          PLAYWRIGHT_BASE_URL: ${{ secrets.PREVIEW_BASE_URL }}
+      # Runs against a local production build (pnpm build + pnpm preview),
+      # NOT a real Cloudflare Pages deployment. Cloudflare hosting isn't
+      # set up for this project yet — wiring up real preview-deployment
+      # E2E is tracked as its own future Jira ticket, since it needs a
+      # deploy step + Cloudflare API token, not just a workflow tweak.
+      # See playwright.config.ts's webServer block for the actual
+      # build+preview command this triggers.
+      #
+      # NOTE: once a real feature imports src/lib/supabase.ts, this build
+      # step will start needing VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY
+      # available as env vars here (real values once GLPDX-9 is done, or
+      # placeholder strings before then) — it doesn't need them yet
+      # because nothing currently imports that file, so it's tree-shaken
+      # out of the bundle entirely.
+      - name: Run E2E tests against local production build
+        run: pnpm e2e
 
       - name: Upload Playwright report
         if: always()
@@ -76,4 +115,3 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 14
-EOF

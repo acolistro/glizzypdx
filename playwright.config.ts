@@ -21,6 +21,14 @@ export default defineConfig({
   // components — they don't belong "alongside" any single piece of code.
   testDir: "./e2e",
 
+  // Playwright's default reporter changes based on environment: locally
+  // it's an interactive list view, but in CI (process.env.CI === "true")
+  // it silently switches to a minimal "dot" reporter that produces NO
+  // html report folder at all. Our CI workflow tries to upload
+  // playwright-report/ as an artifact regardless — without explicitly
+  // forcing the html reporter here, that upload step finds nothing.
+  reporter: [["html", { outputFolder: "playwright-report", open: "never" }]],
+
   // Runs the production build + preview server automatically before the
   // test suite and tears it down after, so you don't have to remember to
   // build/serve yourself before running E2E tests. Vite's preview server

@@ -1,6 +1,14 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./App";
+
+// See NOTE below re: GLPDX-129/GLPDX-144 for why this smoke test now
+// needs a QueryClientProvider and a mocked Turnstile widget — neither
+// was necessary before App started temporarily mounting InquiryForm.
+vi.mock("@marsidev/react-turnstile", () => ({
+  Turnstile: () => <div>Mock Turnstile Widget</div>,
+}));
 
 // This is a smoke test — it just proves the component renders without
 // throwing and that its key text is present. It exists mainly to verify
@@ -10,16 +18,26 @@ import App from "./App";
 //
 // Real, meaningful tests get written alongside each feature as it's
 // built (per project rules: every story has a matching test ticket).
+//
+// NOTE (GLPDX-129): App now temporarily mounts InquiryForm as a
+// placeholder (see GLPDX-144) so it can be manually/E2E tested before
+// real routing exists. InquiryForm uses useVendorInquiry (needs a
+// QueryClientProvider) and renders the real Turnstile widget, which
+// tries to load Cloudflare's script and update state outside act() if
+// left unmocked here — so both are handled the same way InquiryForm's
+// own test file already does. This wrapper/mock (and the placeholder
+// mount in App.tsx) should be removed once GLPDX-144 replaces App with
+// real routing.
 describe("App", () => {
   it("renders the GlizzyPDX heading", () => {
-    // `render` mounts the component into a jsdom-simulated DOM.
-    render(<App />);
+    const queryClient = new QueryClient();
 
-    // `screen` gives us query methods that search that rendered DOM.
-    // getByRole is preferred over getByText where possible — it queries
-    // by accessibility role (here, a level-1 heading), which doubles as
-    // a light accessibility check: if this query fails, it might mean
-    // the heading isn't using proper semantic markup.
+    render(
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>,
+    );
+
     expect(
       screen.getByRole("heading", { level: 1, name: /glizzypdx/i }),
     ).toBeInTheDocument();

@@ -8,6 +8,7 @@ build/
 
 # Environment variables — never commit secrets
 .env
+.env.test
 .env.local
 .env.*.local
 
@@ -48,3 +49,4 @@ pnpm-debug.log*
 # Supabase local dev
 supabase/.branches
 supabase/.temp
+supabase/functions/.env

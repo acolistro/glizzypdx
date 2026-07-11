@@ -52,11 +52,10 @@ jobs:
         run: pnpm exec tsc -b
 
       - name: Run unit & integration tests with coverage
-        # Coverage thresholds are enforced inside vite.config.ts's
-        # test.coverage.thresholds block — `vitest run --coverage` (which
-        # this script wraps) exits non-zero on its own if coverage drops
-        # below them, so no extra CI-side threshold check is needed here.
-        run: pnpm coverage
+        env:
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: placeholder-anon-key
+        run: pnpm coverage  
 
       - name: Upload coverage report
         if: always()
@@ -91,20 +90,56 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium firefox webkit
 
-      # Runs against a local production build (pnpm build + pnpm preview),
-      # NOT a real Cloudflare Pages deployment. Cloudflare hosting isn't
-      # set up for this project yet — wiring up real preview-deployment
-      # E2E is tracked as its own future Jira ticket, since it needs a
-      # deploy step + Cloudflare API token, not just a workflow tweak.
-      # See playwright.config.ts's webServer block for the actual
-      # build+preview command this triggers.
-      #
-      # NOTE: once a real feature imports src/lib/supabase.ts, this build
-      # step will start needing VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY
-      # available as env vars here (real values once GLPDX-9 is done, or
-      # placeholder strings before then) — it doesn't need them yet
-      # because nothing currently imports that file, so it's tree-shaken
-      # out of the bundle entirely.
+      # Installs the `supabase` CLI binary onto the runner (separate from
+      # the JS ecosystem — this is a standalone Go binary, not an npm
+      # package), so we can spin up a REAL local Supabase stack (Postgres,
+      # Auth, Edge Functions runtime) via Docker, the same way local dev
+      # does with `supabase start`. Without this, the E2E build has no
+      # backend to actually talk to.
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # Starts the full local stack (Postgres + Auth + Storage + Edge
+      # Functions runtime) as Docker containers, using this repo's
+      # supabase/config.toml and migrations — same command as local dev.
+      # GitHub's ubuntu-latest runners have Docker preinstalled, so no
+      # separate Docker setup step is needed.
+      - name: Start local Supabase
+        run: supabase start
+
+      # supabase/functions/.env holds the dummy Turnstile secret (see
+      # GLPDX-129) — same file used for local dev, checked into git
+      # ONLY as far as this dummy/public-safe test value goes (never a
+      # real secret). Runs in the background (&) since `functions serve`
+      # is a long-running foreground process; we capture its PID to stop
+      # it cleanly in the cleanup step below, and redirect output to a
+      # log file so it doesn't interleave confusingly with the E2E test
+      # output but is still available if we need to debug a failure.
+      - name: Serve Edge Functions locally
+        run: |
+          supabase functions serve --env-file supabase/functions/.env > functions-serve.log 2>&1 &
+          echo "FUNCTIONS_SERVE_PID=$!" >> "$GITHUB_ENV"
+          # Give the Edge Functions runtime a moment to actually start
+          # listening before the build/E2E run tries to hit it.
+          sleep 5
+
+      # .env.test is gitignored (same reasoning as .env — even though
+      # these are non-sensitive/dummy values today, keeping the pattern
+      # consistent means a future contributor can't accidentally commit
+      # a real secret into this file out of habit). CI writes its own
+      # copy fresh each run. VITE_SUPABASE_ANON_KEY here is Supabase's
+      # well-known LOCAL DEMO anon key — identical for every local
+      # Supabase instance everywhere (it's not a secret, it's baked into
+      # the CLI's default config.toml), safe to hardcode in workflow
+      # files and version control.
+      - name: Create .env.test for E2E build
+        run: |
+          echo "VITE_SUPABASE_URL=http://127.0.0.1:54321" >> .env.test
+          echo "VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0" >> .env.test
+          echo "VITE_TURNSTILE_SITE_KEY=1x00000000000000000000AA" >> .env.test
+
       - name: Run E2E tests against local production build
         run: pnpm e2e
 
@@ -115,3 +150,14 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 14
+
+      # Runs even if earlier steps failed, so a failing E2E run doesn't
+      # leave orphaned Docker containers / background processes on the
+      # runner. GitHub Actions runners are ephemeral and torn down after
+      # every job regardless, so this is more about a clean job log /
+      # good practice than strictly necessary — but it's cheap insurance.
+      - name: Stop Edge Functions and local Supabase
+        if: always()
+        run: |
+          if [ -n "$FUNCTIONS_SERVE_PID" ]; then kill "$FUNCTIONS_SERVE_PID" || true; fi
+          supabase stop

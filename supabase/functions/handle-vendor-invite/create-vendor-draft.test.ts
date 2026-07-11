@@ -1,6 +1,7 @@
 // supabase/functions/handle-vendor-invite/create-vendor-draft.test.ts
 
 import { describe, it, expect, vi } from "vitest";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createVendorDraft } from "./create-vendor-draft";
 
 function mockSupabase({
@@ -21,7 +22,7 @@ function mockSupabase({
     single,
   };
 
-  return { from: vi.fn().mockReturnValue(chain) } as any;
+  return { from: vi.fn().mockReturnValue(chain) } as unknown as SupabaseClient;
 }
 
 describe("createVendorDraft", () => {

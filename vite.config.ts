@@ -34,13 +34,15 @@ export default defineConfig({
   },
 
   test: {
-    // Scope Vitest to ONLY look inside src/ for test files. Without this,
-    // Vitest's default file matching also picks up e2e/*.spec.ts — but
-    // those files import `test` from @playwright/test, not Vitest, which
-    // causes a "did not expect test() to be called here" crash. The two
-    // test runners need to stay in their own lanes: Vitest for src/,
-    // Playwright for e2e/ (see playwright.config.ts's testDir).
-    include: ["src/**/*.{test,spec}.{ts,tsx}"],
+    // Scope Vitest to look inside src/ AND the Edge Functions logic
+    // modules under supabase/functions/. Still excludes anything importing
+    // from @playwright/test (e2e/*.spec.ts) — that pattern doesn't match
+    // either glob below, so Playwright and Vitest stay in their own lanes
+    // as before.
+    include: [
+      "src/**/*.{test,spec}.{ts,tsx}",
+      "supabase/functions/**/*.{test,spec}.ts",
+    ],
 
     // jsdom simulates a browser DOM inside Node, which is what lets
     // React Testing Library render components and query them in tests

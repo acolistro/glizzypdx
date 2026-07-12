@@ -36,7 +36,7 @@ export default defineConfig({
   // own default, not something we chose, but worth knowing so it doesn't
   // look like a typo.
   webServer: {
-    command: "pnpm build && pnpm preview",
+    command: "pnpm build --mode test && pnpm preview",
     url: "http://localhost:4173",
     reuseExistingServer: !process.env.CI,
     // Build + preview startup takes longer than just starting the dev

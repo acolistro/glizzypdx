@@ -151,6 +151,14 @@ jobs:
           path: playwright-report/
           retention-days: 14
 
+      - name: Upload Edge Functions log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: functions-serve-log
+          path: functions-serve.log
+          retention-days: 14    
+
       # Runs even if earlier steps failed, so a failing E2E run doesn't
       # leave orphaned Docker containers / background processes on the
       # runner. GitHub Actions runners are ephemeral and torn down after

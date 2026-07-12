@@ -109,6 +109,9 @@ jobs:
       - name: Start local Supabase
         run: supabase start
 
+      - name: Create supabase/functions/.env for local Edge Functions
+        run: echo "TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA" > supabase/functions/.env  
+
       # supabase/functions/.env holds the dummy Turnstile secret (see
       # GLPDX-129) — same file used for local dev, checked into git
       # ONLY as far as this dummy/public-safe test value goes (never a

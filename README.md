@@ -42,6 +42,7 @@ This project intentionally avoids any Google product in the stack — no Google 
 | Map tiles | Stadia Maps / Protomaps |
 | Backend & database | [Supabase](https://supabase.com/) |
 | Auth | Supabase Auth (vendor-only — public users are unauthenticated) |
+| Bot protection | [Cloudflare Turnstile](https://developers.cloudflare.com/turnstile/) (managed/checkbox mode — public vendor inquiry form) |
 | Hosting | Cloudflare Pages *(planned, not yet configured — see [Deployment](#deployment))* |
 | Analytics | Plausible / Umami (cookieless, no individual tracking) |
 | Server state | TanStack Query |
@@ -58,7 +59,7 @@ This project intentionally avoids any Google product in the stack — no Google 
 
 The codebase follows current React idioms rather than porting a layered MVC/MVVM structure from other ecosystems:
 
-- **Feature-based folders, flat co-location** — code is organized by feature (`features/vendor-map/`, `features/vendor-portal/`), not by type. Files for a feature (component, hook, types, test) sit directly alongside each other rather than split into `components/`, `hooks/`, `types/` subfolders — subfolders only get introduced per-feature if that feature grows past ~5 files
+- **Feature-based folders, flat co-location** — code is organized by feature (`features/vendor-map/`, `features/vendor-portal/`, `features/vendor-inquiry/`), not by type. Files for a feature (component, hook, types, test) sit directly alongside each other rather than split into `components/`, `hooks/`, `types/` subfolders — subfolders only get introduced per-feature if that feature grows past ~5 files
 - **Custom hooks** for logic separation — e.g. `useVendorCheckin()` — rather than a dedicated ViewModel layer
 - **TanStack Query** for all server state — fetching, caching, and syncing data from Supabase
 - **Local component state** via `useState`/`useReducer`; no global state library unless a genuine cross-cutting need arises
@@ -66,14 +67,24 @@ The codebase follows current React idioms rather than porting a layered MVC/MVVM
 ```
 src/
   features/        # one folder per feature, flat co-location within each
-    vendor-map/         # (planned — not yet built)
-    vendor-portal/       # (planned — not yet built)
+    vendor-inquiry/     # built — public inquiry form (GLPDX-129): InquiryForm component,
+                         # useVendorInquiry hook, submit-vendor-inquiry Edge Function client
+    vendor-map/         # planned — not yet built
+    vendor-portal/      # planned — not yet built
   shared/           # code used across 2+ features — bar is deliberately high
   app/              # app-wide wiring: routing, layout, providers
+                     # currently just a placeholder — App.tsx mounts InquiryForm directly
+                     # with no real routing or layout yet (tracked in GLPDX-144)
   lib/
     supabase.ts     # Supabase client singleton
   test/
     setup.ts        # Vitest global test setup
+
+supabase/
+  functions/
+    submit-vendor-inquiry/   # Edge Function: validates input, verifies Turnstile
+                              # server-side via siteverify, inserts into vendor_inquiries
+    .env                     # backend-only secrets for local function serving (gitignored)
 ```
 
 ## Getting started
@@ -82,7 +93,8 @@ src/
 
 - Node.js 24 (Active LTS) — see `.nvmrc`; recommend managing via [nvm](https://github.com/nvm-sh/nvm)
 - [pnpm](https://pnpm.io/) — version is pinned via the `packageManager` field in `package.json`; enable via Corepack (`corepack enable`) or install directly
-- A Supabase project (see [Environment variables](#environment-variables)) — not required to run the app today, since no current code depends on it yet, but required before certain features will work
+- A Supabase project (see [Environment variables](#environment-variables)) — **required** to run the app locally: `App.tsx` mounts the vendor inquiry form, which transitively imports `src/lib/supabase.ts`
+- [Supabase CLI](https://supabase.com/docs/guides/cli) + [Docker](https://www.docker.com/) — required for anything that touches the vendor inquiry form or its Edge Function locally (`supabase start` to run the local stack, `supabase functions serve` to serve Edge Functions)
 
 ### Installation
 
@@ -98,6 +110,7 @@ The first install will prompt you to approve `esbuild`'s build script (`pnpm app
 ### Running locally
 
 ```bash
+supabase start    # starts the local Supabase stack (Postgres, Auth, Edge Functions, etc.) via Docker
 pnpm dev
 ```
 
@@ -115,10 +128,23 @@ cp .env.example .env
 |---|---|
 | `VITE_SUPABASE_URL` | Your Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | Supabase anonymous/public key |
+| `VITE_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key (public), used by the vendor inquiry form widget |
 | `VITE_STADIA_MAPS_API_KEY` | API key for map tile provider *(not yet consumed by any code — reserved for the map feature)* |
 | `VITE_ANALYTICS_DOMAIN` | Domain configured in Plausible/Umami *(not yet consumed by any code)* |
 
 `.env` is gitignored and should never be committed. See `.env.example` for the expected shape.
+
+**Backend / Edge Function secrets** — separate from the `VITE_*` variables above, since they must never ship to the client:
+
+| File | Purpose |
+|---|---|
+| `supabase/functions/.env` | Local Edge Function secrets, e.g. `TURNSTILE_SECRET_KEY` (Turnstile's private verification key). Read by `supabase functions serve`. Gitignored. |
+
+**Test-only environment file:**
+
+| File | Purpose |
+|---|---|
+| `.env.test` | Used only when building for E2E (`vite build --mode test`). Points at the local Supabase instance and Cloudflare's dummy Turnstile sitekey, so E2E runs never build against production. Since Vite bakes `VITE_*` vars in at build time, E2E must use its own `--mode` and matching `.env.test` rather than relying on whatever `.env` happens to be present. Gitignored. |
 
 ## Available scripts
 
@@ -141,7 +167,8 @@ This project uses test-driven development with full coverage required for every 
 - **Unit & integration tests** — Vitest + React Testing Library, colocated with the code they test (`Component.test.tsx` next to `Component.tsx`)
 - **E2E tests** — Playwright, run against a real local production build (`pnpm build && pnpm preview`), not the dev server, across 5 targets: Chromium, Firefox, and WebKit desktop, plus Pixel 7 and iPhone 14 mobile viewports
 - Coverage thresholds are enforced via `vite.config.ts` (currently 80% lines/functions/statements, 75% branches — placeholder values, to be revisited once a real baseline exists) — `pnpm coverage` fails on its own if coverage drops below them
-- **Planned, not yet implemented:** integration tests against a local Supabase instance via Docker, so tests never touch production data. This is the intended approach once Supabase is set up (see open Jira tickets) — not wired in yet
+- **Local Supabase integration testing** — implemented, at least for E2E: the E2E job runs a full local Supabase stack via Docker (`supabase start`) and serves Edge Functions locally, so tests never touch production data. See [Continuous integration](#continuous-integration) for how this is wired in CI. Extending this pattern to Vitest-level integration tests (outside of E2E) is still open.
+- Cloudflare Turnstile's real widget silently refuses to render in headless/automated browsers — including with Cloudflare's own "always passes" dummy sitekey — so E2E tests stub Turnstile via `page.route()` interception rather than driving the real widget.
 
 Run the full suite locally before opening a PR:
 
@@ -156,8 +183,12 @@ pnpm e2e
 
 GitHub Actions runs on every PR into `main` and every push to `main`:
 
-- **Lint, unit & integration tests** — lint, type-check, and run the Vitest suite with coverage, uploading the coverage report as a build artifact
-- **Playwright E2E** *(PRs only)* — installs browsers, builds the app, and runs the full Playwright suite against a local production preview, uploading the HTML report as a build artifact
+- **Lint, unit & integration tests** — lint, type-check, and run the Vitest suite with coverage, uploading the coverage report as a build artifact. This job sets placeholder `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` env vars, since `App.tsx` now transitively imports `src/lib/supabase.ts`.
+- **Playwright E2E** *(PRs only)* — installs browsers, then:
+  1. Installs the Supabase CLI and runs `supabase start` to bring up the full local Docker stack
+  2. Writes a CI-only `supabase/functions/.env` with a dummy Turnstile secret and serves Edge Functions locally
+  3. Writes a CI-only `.env.test` (local Supabase URL + Cloudflare's dummy Turnstile sitekey)
+  4. Builds the app in `test` mode and runs the full Playwright suite against the local production preview, uploading the HTML report as a build artifact
 
 Both jobs use the pnpm version pinned in `package.json` and the Node version pinned in `.nvmrc`, kept in sync with local development.
 

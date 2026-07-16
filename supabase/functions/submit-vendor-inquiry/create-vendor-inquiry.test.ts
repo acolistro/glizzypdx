@@ -81,12 +81,12 @@ describe("createVendorInquiry", () => {
   });
 
   it.each([
-    ["businessName", { ...validInput, businessName: "" }],
-    ["businessName", { ...validInput, businessName: "   " }],
-    ["contactEmail", { ...validInput, contactEmail: "" }],
-    ["contactEmail", { ...validInput, contactEmail: "not-an-email" }],
-    ["message", { ...validInput, message: "" }],
-  ])("returns 'validation_error' when %s is invalid, without calling Turnstile or the database", async (_field, badInput) => {
+    ["businessName", "empty string", { ...validInput, businessName: "" }],
+    ["businessName", "whitespace-only", { ...validInput, businessName: "   " }],
+    ["contactEmail", "empty string", { ...validInput, contactEmail: "" }],
+    ["contactEmail", "malformed format", { ...validInput, contactEmail: "not-an-email" }],
+    ["message", "empty string", { ...validInput, message: "" }],
+  ])("returns 'validation_error' when %s is %s, without calling Turnstile or the database", async (_field, _reason, badInput) => {
     const supabase = makeFakeSupabase({ data: null, error: null });
     const verifyTurnstile = vi.fn();
 

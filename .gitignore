@@ -50,3 +50,4 @@ pnpm-debug.log*
 supabase/.branches
 supabase/.temp
 supabase/functions/.env
+src/routeTree.gen.ts

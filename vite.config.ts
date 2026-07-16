@@ -1,5 +1,6 @@
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
+import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import path from "node:path";
 
 // We import defineConfig from "vitest/config" instead of plain "vite" —
@@ -15,7 +16,16 @@ import path from "node:path";
 export default defineConfig({
   // The React plugin gives us JSX support and Fast Refresh (instant
   // in-browser updates when you save a file, without losing component state).
-  plugins: [react()],
+  plugins: [
+    tanstackRouter({ 
+      target: "react", 
+      autoCodeSplitting: true, 
+      // Test files can live alongside their route files (e.g.
+      // src/routes/index.test.tsx) without being mistaken for actual routes.
+      // Matches any *.test.tsx / *.spec.tsx / *.test.ts / *.spec.ts filename.
+      routeFileIgnorePattern: "\\.(test|spec)\\.(ts|tsx)$",
+    }),
+    react()],
 
   resolve: {
     alias: {

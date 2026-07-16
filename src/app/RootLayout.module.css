@@ -1,0 +1,28 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.marquee {
+  padding: var(--space-sm, 0.5rem);
+  text-align: center;
+  font-family: var(--font-display, "Comic Sans MS", cursive);
+  background-color: var(--color-pink, #ff69b4);
+}
+
+.content {
+  flex: 1;
+  padding: var(--space-md, 1rem);
+}
+
+.footer {
+  padding: var(--space-sm, 0.5rem);
+  text-align: center;
+  font-family: var(--font-body, "Verdana", sans-serif);
+  font-size: 0.85rem;
+}
+
+.hitCounter {
+  font-family: monospace;
+}

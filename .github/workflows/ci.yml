@@ -39,6 +39,19 @@ jobs:
         # never modify the lockfile, only verify it's correct.
         run: pnpm install --frozen-lockfile
 
+      # TanStack Router's file-based routing normally generates
+      # src/routeTree.gen.ts automatically via its Vite plugin, the
+      # moment `vite dev` or `vite build` runs. But `tsc -b` below runs
+      # standalone — it never invokes Vite — so on a fresh CI checkout
+      # (no leftover generated file from a previous local `pnpm dev`),
+      # type-checking fails immediately with "cannot find module
+      # './routeTree.gen'". `tsr generate` (from @tanstack/router-cli)
+      # runs the same route-tree generation logic standalone, without
+      # needing a dev server or full build first — so we run it here,
+      # before anything that depends on types resolving correctly.
+      - name: Generate route tree
+        run: pnpm generate-routes
+
       - name: Lint
         run: pnpm lint
 
@@ -86,6 +99,16 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      # Same reasoning as the lint-and-test job above: `pnpm e2e` runs
+      # Playwright, whose webServer builds the app via `pnpm build`
+      # (tsc -b && vite build). The `tsc -b` half of that chain would
+      # fail on a fresh checkout for the same missing-routeTree.gen.ts
+      # reason, before `vite build` ever gets a chance to generate it
+      # via the plugin. Generating it explicitly here, up front, avoids
+      # depending on step ordering inside that build script.
+      - name: Generate route tree
+        run: pnpm generate-routes
 
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium firefox webkit

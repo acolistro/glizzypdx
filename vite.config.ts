@@ -17,15 +17,9 @@ export default defineConfig({
   // The React plugin gives us JSX support and Fast Refresh (instant
   // in-browser updates when you save a file, without losing component state).
   plugins: [
-    tanstackRouter({ 
-      target: "react", 
-      autoCodeSplitting: true, 
-      // Test files can live alongside their route files (e.g.
-      // src/routes/index.test.tsx) without being mistaken for actual routes.
-      // Matches any *.test.tsx / *.spec.tsx / *.test.ts / *.spec.ts filename.
-      routeFileIgnorePattern: "\\.(test|spec)\\.(ts|tsx)$",
-    }),
-    react()],
+    tanstackRouter({ target: "react", autoCodeSplitting: true }),
+    react(),
+  ],
 
   resolve: {
     alias: {

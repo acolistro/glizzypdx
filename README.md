@@ -42,6 +42,7 @@ This project intentionally avoids any Google product in the stack — no Google 
 | Map tiles | Stadia Maps / Protomaps |
 | Backend & database | [Supabase](https://supabase.com/) |
 | Auth | Supabase Auth (vendor-only — public users are unauthenticated) |
+| Routing | [TanStack Router](https://tanstack.com/router) — decided, not yet implemented (see [note below](#a-note-on-routing) and [GLPDX-144](https://mallsoft.atlassian.net/browse/GLPDX-144)) |
 | Bot protection | [Cloudflare Turnstile](https://developers.cloudflare.com/turnstile/) (managed/checkbox mode — public vendor inquiry form) |
 | Hosting | Cloudflare Pages *(planned, not yet configured — see [Deployment](#deployment))* |
 | Analytics | Plausible / Umami (cookieless, no individual tracking) |
@@ -54,6 +55,8 @@ This project intentionally avoids any Google product in the stack — no Google 
 **On styling:** Tailwind was considered and deliberately dropped. The site's design direction (GeoCities Hotdog Stand — marquee banners, tiled backgrounds, table-layout feel, beveled borders) is easier and more accurate to hand-write than force into utility classes. Design tokens live as CSS custom properties, referenced by per-component `.module.css` files.
 
 **A note on Vite version:** pinned to Vite 7, not the newest Vite 8. Vite 8 is a recent architectural rewrite (new Rolldown-based bundler) with a known dev-server memory regression — Vite 7 is mature and still receives full security + important-fix support as Vite's "previous major." Worth revisiting in another 6–12 months as Vite 8 matures.
+
+**A note on routing:** TanStack Router was chosen over React Router (the more common default) and Wouter (the minimal option). The deciding factor was end-to-end type safety on routes, params, and search params — which fits naturally alongside TanStack Query, already a core dependency here — over React Router's larger ecosystem and ubiquity. Implementation is tracked in [GLPDX-144](https://mallsoft.atlassian.net/browse/GLPDX-144); test coverage in [GLPDX-146](https://mallsoft.atlassian.net/browse/GLPDX-146).
 
 ## Architecture
 
@@ -159,6 +162,7 @@ cp .env.example .env
 | `pnpm test:ui` | Run Vitest with its interactive UI |
 | `pnpm coverage` | Run tests once with a coverage report |
 | `pnpm e2e` | Run the Playwright E2E suite against a local production build |
+| `pnpm generate-routes` | Generate `src/routeTree.gen.ts` standalone (via `@tanstack/router-cli`), without running the dev server or a full build — mainly used in CI ahead of type-checking |
 
 ## Testing
 
@@ -183,14 +187,16 @@ pnpm e2e
 
 GitHub Actions runs on every PR into `main` and every push to `main`:
 
-- **Lint, unit & integration tests** — lint, type-check, and run the Vitest suite with coverage, uploading the coverage report as a build artifact. This job sets placeholder `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` env vars, since `App.tsx` now transitively imports `src/lib/supabase.ts`.
-- **Playwright E2E** *(PRs only)* — installs browsers, then:
+- **Lint, unit & integration tests** — installs dependencies, generates the TanStack Router route tree (`pnpm generate-routes` — see note below), then lints, type-checks, and runs the Vitest suite with coverage, uploading the coverage report as a build artifact. This job sets placeholder `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` env vars, since `main.tsx` transitively imports `src/lib/supabase.ts`.
+- **Playwright E2E** *(PRs only)* — installs dependencies, generates the route tree, then:
   1. Installs the Supabase CLI and runs `supabase start` to bring up the full local Docker stack
   2. Writes a CI-only `supabase/functions/.env` with a dummy Turnstile secret and serves Edge Functions locally
   3. Writes a CI-only `.env.test` (local Supabase URL + Cloudflare's dummy Turnstile sitekey)
   4. Builds the app in `test` mode and runs the full Playwright suite against the local production preview, uploading the HTML report as a build artifact
 
 Both jobs use the pnpm version pinned in `package.json` and the Node version pinned in `.nvmrc`, kept in sync with local development.
+
+**On the route tree generation step:** TanStack Router's file-based routing normally generates `src/routeTree.gen.ts` automatically via its Vite plugin, the moment `vite dev` or `vite build` runs. But `pnpm exec tsc -b` (the type-check step) runs standalone — it never invokes Vite — so on a fresh CI checkout there's no leftover generated file to type-check against, and `tsc -b` fails immediately without this step. `pnpm generate-routes` (backed by `@tanstack/router-cli`) runs the same generation logic standalone, without needing a dev server or build first. Its config lives in `tsr.config.json` at the project root, which is also the single source of truth the Vite plugin itself reads from (via `vite.config.ts`) — keeping both entry points in agreement rather than maintaining the same settings in two places.
 
 ## Branching and contribution workflow
 

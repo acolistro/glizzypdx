@@ -21,10 +21,15 @@ export function RootLayout({ children }: RootLayoutProps) {
           No manual role="banner" needed; semantic HTML gives it to us
           for free, which is also better for accessibility than a <div>
           with a role slapped on. */}
-      <header className={styles.marquee}>
-        {/* Placeholder copy — real marquee text/animation is a design
-            pass, not part of GLPDX-144's "does the shell exist" scope. */}
-        <p>🌭 Welcome to GlizzyPDX — Find Portland's Best Hotdog Carts! 🌭</p>
+     <header className={styles.marquee}>
+        {/* Every page needs exactly one <h1> — this is it. Kept short and
+            identifying (the site name), per semantic HTML best practice,
+            rather than the full welcome sentence. That sentence moves to
+            a plain tagline paragraph below it instead. */}
+        <h1 className={styles.siteTitle}>GlizzyPDX 🌭</h1>
+        <p className={styles.tagline}>
+          Welcome to GlizzyPDX — Find Portland's Best Hotdog Carts!
+        </p>
       </header>
 
       {/* Same idea as <header>: a top-level <main> is implicitly ARIA

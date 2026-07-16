@@ -48,4 +48,20 @@ describe("RootLayout", () => {
 
     expect(screen.getByRole("contentinfo")).toBeInTheDocument();
   });
+
+  it("renders a single top-level heading identifying the site", () => {
+    render(
+      <RootLayout>
+        <p>content</p>
+      </RootLayout>,
+    );
+
+    // Every page should have exactly one <h1> — this locks that in as
+    // part of RootLayout's contract, rather than leaving it to chance
+    // per-page. Matches what e2e/smoke.spec.ts (GLPDX-1) already checks
+    // for in a real browser.
+    expect(
+      screen.getByRole("heading", { level: 1, name: /glizzypdx/i }),
+    ).toBeInTheDocument();
+  });
 });

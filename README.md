@@ -11,6 +11,7 @@ A privacy-first mobile web app that helps people in Portland, Oregon find nearby
 - [About](#about)
 - [Tech stack](#tech-stack)
 - [Architecture](#architecture)
+- [Database migrations](#database-migrations)
 - [Getting started](#getting-started)
 - [Environment variables](#environment-variables)
 - [Available scripts](#available-scripts)
@@ -89,6 +90,20 @@ supabase/
                               # server-side via siteverify, inserts into vendor_inquiries
     .env                     # backend-only secrets for local function serving (gitignored)
 ```
+
+## Database migrations
+
+Every migration that creates a table **must** include its `GRANT` statements (for `anon`, `authenticated`, and/or `service_role`, whichever roles need access) in the same migration file as the `CREATE TABLE` and RLS setup. This is not optional and not just a style preference.
+
+**Why:** Supabase's Dashboard Table Editor automatically grants sane default privileges when you create a table through the UI. Tables created via `supabase migration` (or any other CLI/SQL path) do **not** get that treatment — the auto-grant is a Dashboard UI behavior, not a database-level default. This caused [GLPDX-140](https://mallsoft.atlassian.net/browse/GLPDX-140): `vendors`, `vendor_inquiries`, and `vendor_reports` all shipped with correct RLS policies but no table-level grants, producing 403s even for `service_role` (which bypasses RLS but still needs baseline table access). A follow-up gap on the same ticket also found that a migration being "applied locally" and "marked Done in Jira" is not proof it was ever pushed to the remote/production project — always confirm with `supabase migration list` that Local and Remote timestamps match before closing out ticket work involving a schema migration.
+
+**This is about to become mandatory anyway:** Supabase is removing automatic default grants platform-wide — across every creation path (SQL editor, migrations, Management API, MCP, CLI, or AI coding tools) — with a hard cutover on **October 30, 2026**. After that date, any table without explicit grants simply isn't reachable through the Data API, regardless of how it was created.
+
+A one-time audit of all existing tables against this rule is tracked in [GLPDX-149](https://mallsoft.atlassian.net/browse/GLPDX-149).
+
+Sources:
+- [Supabase docs — Securing your API](https://supabase.com/docs/guides/api/securing-your-api)
+- [Supabase changelog — Breaking Change: Tables not exposed to Data and GraphQL API automatically](https://supabase.com/changelog/45329-breaking-change-tables-not-exposed-to-data-and-graphql-api-automatically)
 
 ## Getting started
 

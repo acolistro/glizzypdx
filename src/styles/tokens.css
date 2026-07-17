@@ -1,0 +1,203 @@
+/**
+ * tokens.css — GlizzyPDX Design Tokens (GLPDX-127)
+ * ============================================================
+ * WHAT THIS FILE IS:
+ * A single source of truth for every color, font, spacing, and
+ * border value used anywhere in the app. Nothing outside this
+ * file should contain a raw hex code, a raw px/rem font size, or
+ * a hardcoded font-family string. Every component's CSS Module
+ * (e.g. VendorMap.module.css) should reference these variables
+ * with var(--token-name) instead.
+ *
+ * WHY THIS MATTERS (if you're coming from Android/Kotlin):
+ * This is the CSS equivalent of your colors.xml / dimens.xml /
+ * type.xml resource files in an Android project. Just like you
+ * wouldn't hardcode a hex color inside a Kotlin View, we don't
+ * hardcode hex colors inside a component's .module.css file.
+ * Everything routes through these named variables so a single
+ * change here updates the whole app.
+ *
+ * HOW CSS CUSTOM PROPERTIES WORK (if this is new to you):
+ * --color-pink: #FF6EC7; defines a variable. Anywhere else in
+ * the app, var(--color-pink) reads that value. Unlike Sass/LESS
+ * variables, these are real runtime CSS values — the browser
+ * can inspect and even change them via JavaScript if we ever
+ * needed to (e.g. a future dark mode). Defining them on :root
+ * means they're globally available to every element on the page,
+ * similar to how an Android resource is available app-wide once
+ * it's declared in res/values/.
+ *
+ * WHERE THIS DATA GOES:
+ * Imported by global.css (which applies some of these tokens to
+ * the <body> element directly), and referenced by every future
+ * component's CSS Module file via var(--token-name).
+ * ============================================================
+ */
+
+:root {
+  /* ----------------------------------------------------------
+   * COLOR PALETTE
+   * ----------------------------------------------------------
+   * GeoCities Hotdog Stand palette: pink-dominant, with mustard
+   * and ketchup as the classic hot-dog accent colors, and a
+   * teal "desktop" background evoking the old-web tiled-wallpaper
+   * aesthetic (a page floating on a colored desktop, like a
+   *90s OS background behind a browser window).
+   *
+   * IMPORTANT — READ BEFORE USING --color-pink:
+   * --color-pink is a soft, dusty-rose pastel — closer to the
+   * color of an actual hot dog sausage than a vibrant magenta.
+   * It works beautifully as a BACKGROUND (7.33:1 with black text
+   * on top — passes AAA), but like most pale pastels it still
+   * FAILS WCAG AA contrast (2.37:1, needs 4.5:1) when used AS
+   * text or AS a UI-component color (focus rings, icons, borders
+   * around interactive controls need 3:1 minimum) on a white
+   * background — pastels are light by nature, so this is true of
+   * essentially any soft pink, not a flaw specific to this one.
+   * That's exactly why --color-pink-dark exists: a deeper rose in
+   * the same family, darkened until it passes AA (5.82:1 on
+   * white). Use --color-pink for decoration and backgrounds. Use
+   * --color-pink-dark anywhere text, links, or focus indicators
+   * need pink. See src/styles/README.md for the full contrast
+   * audit.
+   */
+  --color-pink: #e8918a;         /* soft dusty-rose, hot-dog-sausage toned — great as a bg (7.33:1 w/ black text), fails AA as text/UI color (2.37:1 on white) */
+  --color-pink-dark: #b23a4d;    /* accessible deep rose — 5.82:1 on white, safe for text/links/focus rings */
+  --color-mustard: #e1ad01;      /* verified 8.44:1 with --color-black text on top — safe for badges/buttons */
+  --color-ketchup: #c41e3a;      /* verified 5.84:1 on white — safe for text/buttons */
+  --color-teal: #008080;         /* desktop/body background — see note below on text contrast */
+
+  --color-white: #ffffff;
+  --color-black: #1a1a1a;        /* soft black, not pure #000 — reduces harsh contrast halation while
+                                     still passing AAA (17.4:1 on white) */
+  --color-grey-light: #f0f0f0;   /* neutral background for cards, dividers, subtle fills */
+  --color-grey-mid: #767676;     /* muted/secondary text — sits right at the AA minimum (4.54:1 on
+                                     white), this is the classic "safest usable grey" value */
+
+  /*
+   * NOTE on --color-teal as a background:
+   * White text on teal = 4.77:1 (passes AA for normal text).
+   * Black/--color-black text on teal = 3.65:1 (FAILS AA for
+   * normal text, only passes the lower 3:1 bar for large text
+   * 18px+/bold 14px+). If you ever put body copy directly on a
+   * teal surface (e.g. footer, webring strip), use white text,
+   * not --color-black text, or bump the text to a large size.
+   */
+
+  /* ----------------------------------------------------------
+   * TYPOGRAPHY — FONT FAMILIES
+   * ----------------------------------------------------------
+   * Two roles, per the GeoCities skin constraint: Comic Sans is
+   * DISPLAY-ONLY (h1, .hero-title-style headings) — never body
+   * copy. Body text always uses Verdana/Tahoma. This mirrors an
+   * Android type system with a "headline" style vs a "body"
+   * style — same idea, just expressed as CSS variables instead
+   * of a styles.xml <style> resource.
+   */
+  --font-display: "Comic Sans MS", "Chalkboard SE", "Comic Neue", cursive, sans-serif;
+  /* Fallback chain explained: Comic Sans MS ships on Windows.
+     Chalkboard SE is macOS's closest built-in equivalent (Comic
+     Sans itself isn't bundled with modern macOS). Comic Neue is
+     a free, open, widely-installed Linux lookalike. cursive is
+     the final generic-family fallback so at least *something*
+     handwriting-styled renders if none of the named fonts exist
+     on the user's system. */
+
+  --font-body: Verdana, Tahoma, Geneva, sans-serif;
+  --font-mono: "Courier New", Courier, monospace;
+  /* --font-mono exists for anything table/data-like that wants
+     the "early-internet monospace" feel — e.g. the hit counter
+     skeuomorph mentioned in the design brief. */
+
+  /* ----------------------------------------------------------
+   * TYPE SCALE
+   * ----------------------------------------------------------
+   * rem-based (not px). 1rem = the browser's root font-size,
+   * which respects the user's own accessibility settings (if
+   * someone bumps their browser's default text size up, rem
+   * values scale with it — px values would not). This is the
+   * CSS equivalent of using `sp` instead of `dp` for Android
+   * text sizes, for the same reason: it respects user font-size
+   * preferences instead of ignoring them.
+   *
+   * Assumes the default root font-size of 16px (we do not
+   * override html { font-size } anywhere, so 1rem = 16px unless
+   * the user's browser/OS settings say otherwise).
+   */
+  --text-xs: 0.75rem;    /* 12px — fine print, timestamps, hit-counter digits */
+  --text-sm: 0.875rem;   /* 14px — secondary/meta text, form hints */
+  --text-base: 1rem;     /* 16px — default body copy */
+  --text-lg: 1.125rem;   /* 18px — emphasized body text, card titles */
+  --text-xl: 1.25rem;    /* 20px — section headings */
+  --text-2xl: 1.5rem;    /* 24px — page-level subheadings */
+  --text-3xl: 2rem;      /* 32px — page titles */
+  --text-4xl: 2.75rem;   /* 44px — hero/marquee headline, deliberately capped rather than going
+                             larger, since this is a mobile-first app and a bigger value would
+                             force horizontal scrolling or awkward wrapping on small phones */
+
+  /* ----------------------------------------------------------
+   * SPACING SCALE
+   * ----------------------------------------------------------
+   * 4px base unit, rem-based for the same user-preference reason
+   * as the type scale above. NOTE: this uses a "named multiplier"
+   * scale (1,2,3,4,5,6,8,10,12,16) rather than 16 literal
+   * sequential steps — this is a deliberate assumption on my
+   * part since "space-1 through space-16" was ambiguous in the
+   * ticket. This is the same pattern Tailwind CSS uses and is
+   * the most common convention in the industry; sequential
+   * integer steps past ~6 are rarely useful in practice. Flag it
+   * if you actually wanted all 16 sequential steps defined.
+   */
+  --space-1: 0.25rem;   /* 4px  */
+  --space-2: 0.5rem;    /* 8px  */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-5: 1.25rem;   /* 20px */
+  --space-6: 1.5rem;    /* 24px */
+  --space-8: 2rem;      /* 32px */
+  --space-10: 2.5rem;   /* 40px */
+  --space-12: 3rem;     /* 48px */
+  --space-16: 4rem;     /* 64px */
+
+  /* ----------------------------------------------------------
+   * BORDER RADIUS
+   * ----------------------------------------------------------
+   * Deliberately restrained. The GeoCities aesthetic leans on
+   * visible borders and table-like grids, not soft rounded
+   * corners — so most UI elements should use --radius-none or
+   * --radius-sm. --radius-md exists for the rare case (e.g. a
+   * modal or toast) that needs a slightly softened corner.
+   */
+  --radius-none: 0;
+  --radius-sm: 2px;
+  --radius-md: 6px;
+
+  /* ----------------------------------------------------------
+   * Z-INDEX SCALE
+   * ----------------------------------------------------------
+   * An intentionally large numeric gap between each layer (not
+   * 1, 2, 3, 4) so that if a future feature needs to slot a new
+   * layer *between* two existing ones (e.g. a tooltip above the
+   * sidebar but below the modal), there's numeric room to do
+   * that without renumbering everything else. This is the CSS
+   * equivalent of Android's elevation system, but explicit
+   * numbers instead of implicit shadow-based stacking.
+   */
+  --z-map: 0;        /* MapLibre canvas — the base layer everything else sits above */
+  --z-sidebar: 10;    /* vendor list sidebar, floating over the map */
+  --z-modal: 100;     /* vendor detail modals, confirmation dialogs */
+  --z-toast: 1000;    /* toast notifications — always visible above any modal */
+
+  /* ----------------------------------------------------------
+   * TRANSITIONS
+   * ----------------------------------------------------------
+   * Two speeds only, kept simple on purpose. --transition-fast
+   * for micro-interactions (button hover/press). --transition-base
+   * for anything more noticeable (a panel sliding in, a modal
+   * fading in). Both respect prefers-reduced-motion — see the
+   * media query wrapper in global.css, which neutralizes these
+   * for users who've asked their OS to reduce motion.
+   */
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+}

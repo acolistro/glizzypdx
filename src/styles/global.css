@@ -1,0 +1,174 @@
+/**
+ * global.css — GlizzyPDX Global Styles (GLPDX-127)
+ * ============================================================
+ * WHAT THIS FILE DOES:
+ * Applies a CSS reset (removing inconsistent browser default
+ * styling), sets the base look of the <body> element using the
+ * tokens defined in tokens.css, and defines two accessibility
+ * behaviors that apply globally: a visible keyboard-focus ring,
+ * and respect for the user's reduced-motion preference.
+ *
+ * WHERE ITS DATA COMES FROM:
+ * Imports tokens.css (the line right below this comment) and
+ * consumes its CSS custom properties via var(--token-name).
+ * This file defines NO new color/font/spacing values of its
+ * own — everything here should trace back to a token.
+ *
+ * WHERE THIS GETS LOADED:
+ * This file should be imported exactly once, at the top of the
+ * app's entry point (main.tsx or App.tsx), so its resets and
+ * body styles apply globally before any component renders.
+ * Unlike a CSS Module (Component.module.css), nothing in this
+ * file is scoped — it deliberately targets global selectors
+ * like body, *, and :focus-visible.
+ * ============================================================
+ */
+
+@import "./tokens.css";
+
+/* Forces native browser UI (form controls, scrollbars, date pickers)
+   to render in light mode regardless of the user's OS dark-mode
+   setting. Carried over from the placeholder index.css that predated
+   this ticket — a deliberate choice, not an omission. The GeoCities
+   aesthetic assumes a light page; letting native controls render dark
+   would look broken/inconsistent against it. */
+:root {
+  color-scheme: light;
+}
+
+/* ----------------------------------------------------------
+ * CSS RESET
+ * ----------------------------------------------------------
+ * Browsers ship with inconsistent default margins, paddings,
+ * and box-sizing behavior. This is the CSS equivalent of the
+ * default Android theme attributes you'd normally strip out
+ * before applying your own design system — without this,
+ * every browser's built-in "opinion" about how an <h1> or <ul>
+ * should look would fight with our own design tokens.
+ */
+*,
+*::before,
+*::after {
+  /* border-box means an element's declared width/height INCLUDES
+     its padding and border, not just its content. This matches
+     how most people intuitively think about sizing (and matches
+     Android's behavior, where padding doesn't expand a View's
+     declared size) — the alternative default, content-box, adds
+     padding/border ON TOP of the declared size, which is
+     confusing and rarely what you want. */
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Prevent long unbroken strings (URLs, vendor names) from
+   overflowing their container on narrow mobile viewports. */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+img,
+picture,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* ----------------------------------------------------------
+ * BODY BASE STYLES
+ * ----------------------------------------------------------
+ * Sets the default font, text color, and background for the
+ * whole app. Individual components can still override these
+ * where needed (e.g. a card with a different background), but
+ * this is the fallback everything inherits from.
+ */
+body {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--color-black);
+  background-color: var(--color-teal);
+  /* --color-teal is the "desktop" background per the GeoCities
+     brief — the page's content area (built separately, likely
+     a centered container component from GLPDX-144's layout
+     shell) sits on top of this teal backdrop, similar to how a
+     90s desktop wallpaper sat behind a browser window. */
+
+  line-height: 1.5;
+  /* 1.5 is a widely-used accessible default for body copy —
+     tighter line-heights make text harder to read for people
+     with low vision or reading disabilities. */
+
+  min-height: 100vh;   /* fallback for browsers that don't support dvh */
+  min-height: 100dvh;  /* dynamic viewport height — accounts for mobile
+                           browser chrome (address bar) showing/hiding,
+                           so the page doesn't end up taller than what's
+                           actually visible. Plain vh doesn't do this and
+                           can cause awkward extra scroll space on phones.
+                           Carried over from the placeholder index.css,
+                           which already made this call correctly. */
+}
+
+/* Headings use the display font by default. Individual
+   components are free to override this for a specific heading
+   if a design calls for it, but this is the sane default so no
+   component has to remember to set font-family every time it
+   renders an <h1>. */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+  font-weight: normal;
+  /* Comic Sans MS doesn't have a meaningfully different "bold"
+     weight rendering in most browsers — leaving this at normal
+     avoids the fake-bold synthetic rendering some browsers
+     apply, which can look muddy. */
+}
+
+/* ----------------------------------------------------------
+ * FOCUS-VISIBLE RING (KEYBOARD ACCESSIBILITY)
+ * ----------------------------------------------------------
+ * :focus-visible (as opposed to plain :focus) only shows this
+ * ring when the browser thinks the user is navigating via
+ * keyboard (Tab key) rather than clicking with a mouse/finger.
+ * This gives keyboard and screen-reader users a clear visual
+ * indicator of which element is focused, without adding a
+ * ring around every element a mouse user merely clicks — which
+ * most sighted mouse users would find visually noisy.
+ *
+ * Uses --color-pink-dark, NOT --color-pink. As documented in
+ * tokens.css, --color-pink fails the 3:1 contrast minimum
+ * required for UI-component indicators (WCAG 1.4.11). This is
+ * still very much a "brand pink" ring — just the accessible
+ * variant of it.
+ */
+:focus-visible {
+  outline: 3px solid var(--color-pink-dark);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ----------------------------------------------------------
+ * REDUCED MOTION
+ * ----------------------------------------------------------
+ * Some users experience motion sickness, vestibular disorders,
+ * or distraction from animation, and can set a system-level
+ * "reduce motion" preference to ask sites to respect that. This
+ * media query wrapper detects that preference and neutralizes
+ * animations/transitions globally when it's set, rather than
+ * requiring every future component to remember to check for it
+ * individually.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

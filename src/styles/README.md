@@ -72,6 +72,9 @@ that audit found:
 | `--color-black` on `--color-white` | 17.4:1 | Passes AAA |
 | `--color-grey-mid` on `--color-white` | 4.54:1 | Passes AA (normal text) — this is the tightest margin in the palette, right at the AA floor |
 | `--color-pink-dark` on `--color-white` | 5.82:1 | Passes AA |
+| `--color-status-active` on `--color-white` (pin fill / text) | 5.13:1 | Passes AA |
+| `--color-white` on `--color-status-active` (icon on pin) | 5.13:1 | Passes AA |
+| `--color-status-last-known` on `--color-white` | 4.54:1 | Passes AA — inherited from `--color-grey-mid` |
 | `--color-ketchup` on `--color-white` | 5.84:1 | Passes AA |
 | `--color-black` on `--color-mustard` | 8.44:1 | Passes AAA |
 | `--color-black` on `--color-pink` (pastel as background) | 7.33:1 | Passes AAA |
@@ -105,6 +108,20 @@ white text on top (4.77:1) but **not** with `--color-black` text on top
 copy directly on a teal surface — a footer strip, a webring-style
 element — use white text there, not black, or make sure the text
 qualifies as "large text" (18px+ regular or 14px+ bold).
+
+## A note on the map pin status colors
+
+`--color-status-active` and `--color-status-last-known` were added after
+the initial token set shipped, once it became clear that the map-pin
+component tickets (GLPDX-33, 35, 36, 37, 46) referenced pin states by
+plain color words ("green," "gray pins") with no token to point to.
+`--color-status-active` is a new value, verified for contrast in both
+directions since it needs to work both as a pin fill (with a white icon
+on top) and potentially as text/legend copy. `--color-status-last-known`
+is deliberately just an alias of `--color-grey-mid` — same underlying
+value, given its own semantic name so a future reader can tell the pin
+is gray *because it means "last known"*, not because someone reached for
+the nearest grey out of convenience.
 
 ## A note on the spacing scale
 

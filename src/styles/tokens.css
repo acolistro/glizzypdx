@@ -71,6 +71,26 @@
   --color-black: #1a1a1a;        /* soft black, not pure #000 — reduces harsh contrast halation while
                                      still passing AAA (17.4:1 on white) */
   --color-grey-light: #f0f0f0;   /* neutral background for cards, dividers, subtle fills */
+  
+  /*
+   * MAP PIN STATUS COLORS
+   * ----------------------------------------------------------
+   * Semantic aliases for the three vendor map states (see the
+   * "Map states" section of the project rules): active (green),
+   * last known (gray), hidden (no pin rendered, no color needed).
+   * These exist specifically so component tickets like GLPDX-33/
+   * 35/36/37/46 have a real token to reference instead of writing
+   * a raw hex value or a bare CSS color keyword like "green".
+   *
+   * --color-status-last-known is an ALIAS of --color-grey-mid, not
+   * a new raw value — it reuses the same grey already verified for
+   * accessible text, but under its own semantic name so it's clear
+   * *why* a pin is that color (it means "last known", not just
+   * "muted text reused here by coincidence").
+   */
+  --color-status-active: #2e7d32;          /* verified 5.13:1 both directions — safe as a pin fill
+                                               with a white icon on top, or as text/legend swatch */
+  --color-status-last-known: var(--color-grey-mid); /* semantic alias — see note above */
   --color-grey-mid: #767676;     /* muted/secondary text — sits right at the AA minimum (4.54:1 on
                                      white), this is the classic "safest usable grey" value */
 

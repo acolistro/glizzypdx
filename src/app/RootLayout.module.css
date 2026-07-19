@@ -1,37 +1,70 @@
+/**
+ * RootLayout.module.css
+ * GLPDX-152 — retrofit to real design tokens (see src/styles/tokens.css)
+ */
+
 .page {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  /* 100vh -> 100dvh: on mobile, 100vh includes space behind the browser's
+     address bar, causing a jump/scrollbar flash as it shows/hides on
+     scroll. 100dvh tracks the actual visible viewport instead. */
+  min-height: 100dvh;
 }
 
 .marquee {
-  padding: var(--space-sm, 0.5rem);
+  /* --space-sm was never a real token (only --space-1..6,8,10,12,16 are
+     defined), so this fallback was silently the only value ever applied.
+     --space-2 is the real token for the same 0.5rem/8px value. */
+  padding: var(--space-2);
   text-align: center;
   font-family: var(--font-display, "Comic Sans MS", cursive);
-  background-color: var(--color-pink, #ff69b4);
+  /* #ff69b4 was a leftover hardcoded pink predating tokens.css and
+     doesn't match the real --color-pink value (#e8918a). Token exists
+     now, so the fallback was just dead weight. */
+  background-color: var(--color-pink);
 }
 
 .content {
   flex: 1;
-  padding: var(--space-md, 1rem);
+  /* Same issue as .marquee: --space-md was never a real token. */
+  padding: var(--space-4);
 }
 
 .footer {
-  padding: var(--space-sm, 0.5rem);
+  padding: var(--space-2);
   text-align: center;
   font-family: var(--font-body, "Verdana", sans-serif);
-  font-size: 0.85rem;
+  font-size: var(--text-sm); /* 0.875rem — closest scale value to the old 0.85rem hardcode; also covers .hitCounter and .webring by inheritance */
 }
 
 .hitCounter {
-  font-family: monospace;
+  /* Was the bare CSS keyword `monospace`, which just picks whatever
+     generic monospace font the OS defaults to. --font-mono locks it to
+     the specific "Courier New" stack tokens.css defines. */
+  font-family: var(--font-mono);
+}
+
+/* Referenced in RootLayout.tsx's JSX (styles.webring) but had no rule —
+   the "dangling reference" from the ticket, rendering fully unstyled.
+   Giving it a footer-strip look: hairline divider, spaced off the hit
+   counter above it. */
+.webring {
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-grey-mid);
 }
 
 .siteTitle {
   margin: 0;
-  font-size: 1.5rem;
+  /* --text-4xl is documented in tokens.css specifically as "hero/marquee
+     headline" — this is that element, and it's the page's only <h1>. */
+  font-size: var(--text-4xl);
 }
 
 .tagline {
-  margin: 0.25rem 0 0;
+  /* Not on the ticket's explicit list, but same category of bug as the
+     spacing fixes above: a hardcoded rem value instead of a token.
+     0.25rem is an exact match for --space-1. */
+  margin: var(--space-1) 0 0;
 }

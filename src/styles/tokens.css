@@ -114,15 +114,28 @@
    * style — same idea, just expressed as CSS variables instead
    * of a styles.xml <style> resource.
    */
-  --font-display: "Comic Sans MS", "Chalkboard SE", "Comic Neue", cursive, sans-serif;
-  /* Fallback chain explained: Comic Sans MS ships on Windows.
-     Chalkboard SE is macOS's closest built-in equivalent (Comic
-     Sans itself isn't bundled with modern macOS). Comic Neue is
-     a free, open, widely-installed Linux lookalike. cursive is
-     the final generic-family fallback so at least *something*
-     handwriting-styled renders if none of the named fonts exist
-     on the user's system. */
+--font-display: "Comic Neue", "Comic Sans MS", "Chalkboard SE", cursive, sans-serif;
+/* Fallback chain explained (updated GLPDX-159): Comic Neue is
+   listed FIRST now, and is self-hosted via @font-face in
+   global.css — see that file for the full explanation.
 
+   IMPORTANT CORRECTION: an earlier version of this comment
+   described Comic Neue as "a free, open, widely-installed Linux
+   lookalike." That was wrong — it isn't pre-installed by default
+   on any OS, Linux included. That false assumption is exactly
+   what caused GLPDX-159: the font silently fell through to the
+   generic `cursive` keyword on Android, rendering as an
+   unrelated script font. Self-hosting fixes this by not
+   depending on OS-installed fonts at all — the font ships with
+   the app, so it renders identically everywhere.
+
+   Comic Sans MS (ships on Windows) and Chalkboard SE (macOS's
+   closest built-in equivalent; Comic Sans itself isn't bundled
+   with modern macOS) are now true fallbacks — only reached if
+   the self-hosted font files fail to load for some reason (bad
+   path, network failure). cursive is the final generic-family
+   fallback so at least *something* handwriting-styled renders
+   if every named font is unavailable. */
   --font-body: Verdana, Tahoma, Geneva, sans-serif;
   --font-mono: "Courier New", Courier, monospace;
   /* --font-mono exists for anything table/data-like that wants

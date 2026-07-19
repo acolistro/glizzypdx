@@ -58,7 +58,13 @@
 }
 
 .submitButton {
-  font-family: "Comic Sans MS", "Comic Sans", cursive;
+  /* var(--font-display) instead of a hardcoded font stack — the
+     hardcoded version had no font available on Android and degraded
+     to an unrelated script font (GLPDX-159). The token resolves to
+     self-hosted Comic Neue, which loads identically on every
+     platform. The rest of this file still predates the token system
+     and is being retrofitted separately under GLPDX-160. */
+  font-family: var(--font-display);
   font-size: 1.125rem;
   font-weight: bold;
   padding: 0.75rem 1.5rem;

@@ -26,6 +26,57 @@
 
 @import "./tokens.css";
 
+/* ============================================================
+ * SELF-HOSTED FONTS — Comic Neue (GLPDX-159)
+ * ============================================================
+ * Self-hosted to avoid depending on Google Fonts' CDN, and to
+ * avoid depending on the font being pre-installed on the user's
+ * OS — that's what broke --font-display on Android (see
+ * GLPDX-159). Files live in public/fonts/, sourced directly
+ * from the font's own GitHub repo (github.com/crozynski/comicneue),
+ * not from Google's catalog or infrastructure.
+ *
+ * License: SIL OFL 1.1 — full text at public/fonts/OFL.txt, as
+ * required by the license terms for any redistributed copy.
+ *
+ * Two src() formats per weight: .woff2 is listed first, since
+ * the browser uses the first format it supports. WebKit,
+ * Chromium, and Firefox — this project's whole Playwright test
+ * matrix — all support woff2 natively, so .woff2 is what
+ * actually loads in practice. .woff rides along as a fallback
+ * for anything outside that matrix.
+ *
+ * font-display: swap tells the browser to render text in a
+ * fallback font immediately, then swap to Comic Neue once it
+ * finishes downloading, instead of leaving text invisible while
+ * the font file loads (it's small — ~22KB — but not instant on
+ * a slow connection, and invisible text is worse than a brief
+ * font swap).
+ *
+ * NOTE: this block must come AFTER any @import statements in
+ * this file — @import is required by the CSS spec to appear
+ * first, before any other rule.
+ */
+@font-face {
+  font-family: "Comic Neue";
+  src:
+    url("/fonts/comic-neue-regular.woff2") format("woff2"),
+    url("/fonts/comic-neue-regular.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Comic Neue";
+  src:
+    url("/fonts/comic-neue-bold.woff2") format("woff2"),
+    url("/fonts/comic-neue-bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Forces native browser UI (form controls, scrollbars, date pickers)
    to render in light mode regardless of the user's OS dark-mode
    setting. Carried over from the placeholder index.css that predated

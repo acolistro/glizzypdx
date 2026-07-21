@@ -5,87 +5,128 @@
   form is a small piece of a larger page; the marquee/tiled-background/
   hit-counter flourishes belong at the page level, not duplicated per
   component.
+
+  GLPDX-160: retrofitted from raw hex values to design tokens
+  (tokens.css). Three things below aren't 1:1 hex-to-token swaps —
+  see the comments at each spot for why:
+    1. .submitButton uses --color-black text AND border on
+       --color-mustard, not pink — pink-on-mustard fails WCAG AA for
+       text, and even the darker pink token fails the 3:1 border
+       minimum on mustard (2.82:1).
+    2. .fieldError and .confirmation text use the "-dark" token
+       variants, not the base ones, because they render on top of
+       --color-pink-light and the lighter variants don't clear 4.5:1
+       there.
+    3. The old #ff69b4 border color is split by role: --color-pink
+       for purely decorative frames (.form, .confirmation),
+       --color-pink-dark for borders that outline an interactive
+       control (.field inputs) — --color-pink alone is only 2.37:1
+       on white and fails the 3:1 a UI-component boundary needs.
 */
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-4);
+  /* No token for 28rem — the spacing scale tops out at --space-16
+     (4rem) and is meant for gaps/padding, not container widths.
+     Left as a literal; flag if a layout/container-width scale
+     should exist. */
   max-width: 28rem;
-  padding: 1.5rem;
-  background-color: #ffe4f1;
-  border: 4px dashed #ff69b4;
-  font-family: Verdana, Tahoma, sans-serif;
+  padding: var(--space-6);
+  background-color: var(--color-pink-light);
+  /* Decorative frame, not a UI-component boundary (WCAG 1.4.11 only
+     governs borders that convey required functional information,
+     like an input's edges) — so the softer --color-pink is fine
+     here even though it wouldn't pass the 3:1 UI-component bar. */
+  border: 4px dashed var(--color-pink);
+  font-family: var(--font-body);
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
 
 .field label {
   font-weight: bold;
-  color: #c2185b;
+  /* On --color-pink-light: --color-pink-dark clears 4.5:1 (4.89:1).
+     Plain --color-pink would not. */
+  color: var(--color-pink-dark);
 }
 
 .field input,
 .field textarea {
-  padding: 0.5rem;
-  border: 2px solid #ff69b4;
-  border-radius: 4px;
+  padding: var(--space-2);
+  /* This border needs 3:1 — it's how a sighted user identifies the
+     input's boundary. --color-pink-dark clears it easily (5.82:1 on
+     white); --color-pink (2.37:1) would not. */
+  border: 2px solid var(--color-pink-dark);
+  /* 4px has no exact radius token (--radius-sm=2px, --radius-md=6px).
+     Using --radius-sm to match the GeoCities brief's preference for
+     mostly-square corners — flag if 6px was actually intended. */
+  border-radius: var(--radius-sm);
   font-family: inherit;
-  font-size: 1rem;
+  font-size: var(--text-base);
 }
 
 .field input[aria-invalid="true"],
 .field textarea[aria-invalid="true"] {
-  border-color: #d32f2f;
+  /* Border only needs 3:1, not 4.5:1 — --color-error is fine here. */
+  border-color: var(--color-error);
 }
 
 .fieldError {
-  color: #d32f2f;
-  font-size: 0.875rem;
+  /* Renders on --color-pink-light (inherited from .form).
+     --color-error alone is 4.18:1 there and fails AA.
+     --color-error-dark is 5.52:1 and passes. */
+  color: var(--color-error-dark);
+  font-size: var(--text-sm);
   margin: 0;
 }
 
 .errorBanner {
-  padding: 0.75rem;
-  background-color: #ffebee;
-  border: 2px solid #d32f2f;
-  color: #b71c1c;
+  padding: var(--space-3);
+  background-color: var(--color-error-bg);
+  border: 2px solid var(--color-error);
+  color: var(--color-error-dark);
   font-weight: bold;
 }
 
 .submitButton {
-  /* var(--font-display) instead of a hardcoded font stack — the
-     hardcoded version had no font available on Android and degraded
-     to an unrelated script font (GLPDX-159). The token resolves to
-     self-hosted Comic Neue, which loads identically on every
-     platform. The rest of this file still predates the token system
-     and is being retrofitted separately under GLPDX-160. */
   font-family: var(--font-display);
-  font-size: 1.125rem;
+  font-size: var(--text-lg);
   font-weight: bold;
-  padding: 0.75rem 1.5rem;
-  background-color: #ffd700;
-  border: 3px solid #ff69b4;
-  border-radius: 6px;
-  color: #c2185b;
+  padding: var(--space-3) var(--space-6);
+  background-color: var(--color-mustard);
+  /* Functional boundary — must pass 3:1, and does (8.44:1 vs
+     --color-black text). This is the border a screen reader /
+     keyboard user's focus outline logic treats as "the button's
+     edge." */
+  border: 3px solid var(--color-black);
+  border-radius: var(--radius-md);
+  /* Decorative outer ring, not the functional boundary — box-shadow
+     here doesn't define the component's edge, so it's exempt from
+     the 3:1 non-text contrast rule. Restores pink to the button
+     without reintroducing the 2.82:1 failure a pink border had. */
+  box-shadow: 0 0 0 3px var(--color-pink);
+  color: var(--color-black);
   cursor: pointer;
 }
-
 .submitButton:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
 .confirmation {
-  padding: 2rem;
-  background-color: #ffe4f1;
-  border: 4px dashed #ff69b4;
+  padding: var(--space-8);
+  background-color: var(--color-pink-light);
+  border: 4px dashed var(--color-pink);
   text-align: center;
-  font-family: Verdana, Tahoma, sans-serif;
+  font-family: var(--font-body);
   font-weight: bold;
-  color: #c2185b;
+  /* Same reasoning as .field label: --color-pink-dark clears 4.5:1
+     on --color-pink-light (4.89:1), --color-pink would not. */
+  color: var(--color-pink-dark);
 }

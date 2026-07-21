@@ -63,6 +63,10 @@
    */
   --color-pink: #e8918a;         /* soft dusty-rose, hot-dog-sausage toned — great as a bg (7.33:1 w/ black text), fails AA as text/UI color (2.37:1 on white) */
   --color-pink-dark: #b23a4d;    /* accessible deep rose — 5.82:1 on white, safe for text/links/focus rings */
+  --color-pink-light: #ffe4f1;   /* pale pink, added GLPDX-160 for card/form backgrounds that need
+                                     something softer than --color-pink. Decorative/background use
+                                     only — too light for UI-component borders or text. --color-pink-dark
+                                     on top = 4.89:1 (passes AA, barely); --color-black on top = 14.6:1. */
   --color-mustard: #e1ad01;      /* verified 8.44:1 with --color-black text on top — safe for badges/buttons */
   --color-ketchup: #c41e3a;      /* verified 5.84:1 on white — safe for text/buttons */
   --color-teal: #008080;         /* desktop/body background — see note below on text contrast */
@@ -103,6 +107,26 @@
    * teal surface (e.g. footer, webring strip), use white text,
    * not --color-black text, or bump the text to a large size.
    */
+
+/*
+   * ERROR / VALIDATION COLORS
+   * ----------------------------------------------------------
+   * Added GLPDX-160. First semantic "state" palette in the system
+   * besides the map-pin status colors above. Same light/dark
+   * pairing pattern as --color-pink/--color-pink-dark: the light
+   * value is background-only, the dark value is for anything that
+   * needs to pass AA as text or as a UI-component boundary.
+   *
+   * --color-error is NOT used for text on --color-pink-light — it
+   * only reaches 4.18:1 there, below the 4.5:1 minimum. Use
+   * --color-error-dark for error text on any pink/pink-light
+   * surface (5.52:1 / 5.75:1). --color-error itself is fine as a
+   * border/UI-component color everywhere it's used in this app,
+   * and works as text only on plain white (4.98:1).
+   */
+  --color-error: #d32f2f;        /* invalid-field borders, error-banner border — UI-component contrast only */
+  --color-error-dark: #b71c1c;   /* error text everywhere — 5.52:1 on pink-light, 5.75:1 on error-bg, 6.57:1 on white */
+  --color-error-bg: #ffebee;     /* error banner background */   
 
   /* ----------------------------------------------------------
    * TYPOGRAPHY — FONT FAMILIES

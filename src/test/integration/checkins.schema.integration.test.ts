@@ -29,6 +29,7 @@ import {
   createAuthedTestUser,
   getAnonClient,
   getServiceRoleClient,
+  seedVendor,
   type AuthedTestUser,
 } from "./clients";
 

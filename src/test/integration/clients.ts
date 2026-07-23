@@ -115,3 +115,31 @@ export async function createAuthedTestUser(
     },
   };
 }
+
+/**
+ * Creates a throwaway `vendors` row for a test to attach related rows to (checkins, etc.) or to
+ * assert directly against.
+ *
+ * Data comes from: `name` is the only NOT-NULL, no-default column on `vendors` (confirmed
+ * against the GLPDX-128 migration) -- everything else is left to its column default.
+ * `owner_user_id` is left NULL, making the seeded vendor admin-managed, so callers that don't
+ * care about vendor ownership don't also need to create an authenticated user just to seed one.
+ *
+ * Data goes to: the returned `id` -- used as a foreign key (e.g. `checkins.vendor_id`) or as
+ * the row under test for column/RLS assertions against `vendors` itself.
+ *
+ * Always uses a service_role client internally, regardless of what the calling test is
+ * asserting -- seeding should never be subject to the RLS policies under test.
+ */
+export async function seedVendor(): Promise<string> {
+  const { data, error } = await getServiceRoleClient()
+    .from("vendors")
+    .insert({ name: `Test Vendor ${crypto.randomUUID()}` })
+    .select("id")
+    .single();
+
+  if (error || !data) {
+    throw new Error(`Failed to seed test vendor: ${error?.message ?? "no data returned"}`);
+  }
+  return data.id as string;
+}

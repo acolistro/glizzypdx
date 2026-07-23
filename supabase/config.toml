@@ -165,7 +165,18 @@ web3 = 30
 
 [auth.email]
 # Allow/disallow new user signups via email to your project.
-enable_signup = false
+#
+# NOTE (GLPDX-162 / relevant to GLPDX-131): the local Supabase CLI maps this single flag to
+# GOTRUE_EXTERNAL_EMAIL_ENABLED, which disables the ENTIRE email/password provider — including
+# OTP/magic-link/invite-token verification and password sign-in — not just self-signup. This is
+# a known CLI limitation (see supabase/cli#4469), specific to how the LOCAL stack maps config to
+# GoTrue env vars. It does NOT reflect the hosted remote project, which exposes "email provider"
+# and "allow signups" as independent toggles in the dashboard.
+#
+# Set to true locally so invite-link acceptance (GLPDX-131) and admin-created test users
+# (GLPDX-162 harness) can actually authenticate. This does not open a real public signup path:
+# the app itself never ships a signup route/form, so there is nothing for this flag to expose.
+enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true

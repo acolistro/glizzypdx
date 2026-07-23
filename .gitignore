@@ -10,6 +10,7 @@ build/
 .env
 .env.test
 .env.local
+.env.test.local
 .env.*.local
 
 # Testing

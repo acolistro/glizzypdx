@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint-and-test:
-    name: Lint, unit & integration tests
+    name: Lint, type-check & unit tests
     runs-on: ubuntu-latest
 
     steps:
@@ -64,11 +64,11 @@ jobs:
         # it doesn't write any output files.
         run: pnpm exec tsc -b
 
-      - name: Run unit & integration tests with coverage
+      - name: Run unit tests with coverage
         env:
           VITE_SUPABASE_URL: https://placeholder.supabase.co
           VITE_SUPABASE_ANON_KEY: placeholder-anon-key
-        run: pnpm coverage  
+        run: pnpm coverage
 
       - name: Upload coverage report
         if: always()
@@ -77,6 +77,69 @@ jobs:
           name: coverage-report
           path: coverage/
           retention-days: 14
+
+  integration:
+    name: Integration tests (local Supabase)
+    runs-on: ubuntu-latest
+    # PR-only, mirroring the e2e job: main is protected (PRs required), so
+    # PR-time is the gate that matters. No need to re-run on the post-merge
+    # push to main.
+    if: github.event_name == 'pull_request'
+    # Don't spin up Docker if lint / type-check / unit tests are already
+    # broken — cheaper to fail fast in the light job first.
+    needs: lint-and-test
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Installs the standalone `supabase` CLI binary (Go, not npm) so we can
+      # run a REAL local stack via Docker — same as `supabase start` locally.
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # Starts Postgres + Auth (+ the rest) as Docker containers and applies
+      # this repo's migrations. That is all the integration harness needs —
+      # tests talk to Postgres/Auth directly via the service_role/anon clients;
+      # no Edge Functions `serve` and no app build are required here (that's
+      # the e2e job's concern, not this one).
+      - name: Start local Supabase
+        run: supabase start
+
+      # The integration harness (GLPDX-162) reads NON-VITE_ vars. Pull the
+      # running stack's keys at runtime and expose them to the test process via
+      # $GITHUB_ENV. The URL is deterministic (port from config.toml), so it's
+      # hardcoded; the keys are read dynamically rather than pasted in.
+      # NOTE: confirm the JSON keys match your CLI (v2.109.0) output —
+      # `supabase status -o json` should expose ANON_KEY and SERVICE_ROLE_KEY.
+      - name: Export local Supabase credentials
+        run: |
+          echo "SUPABASE_URL=http://127.0.0.1:54321" >> "$GITHUB_ENV"
+          echo "SUPABASE_ANON_KEY=$(supabase status -o json | jq -r '.ANON_KEY')" >> "$GITHUB_ENV"
+          echo "SUPABASE_SERVICE_ROLE_KEY=$(supabase status -o json | jq -r '.SERVICE_ROLE_KEY')" >> "$GITHUB_ENV"
+
+      # --passWithNoTests lives in the script itself; this stays green on PRs
+      # that add no integration files (e.g. the harness PR).
+      - name: Run integration tests
+        run: pnpm test:integration
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop
 
   e2e:
     name: Playwright E2E
@@ -133,7 +196,7 @@ jobs:
         run: supabase start
 
       - name: Create supabase/functions/.env for local Edge Functions
-        run: echo "TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA" > supabase/functions/.env  
+        run: echo "TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA" > supabase/functions/.env
 
       # supabase/functions/.env holds the dummy Turnstile secret (see
       # GLPDX-129) — same file used for local dev, checked into git
@@ -183,7 +246,7 @@ jobs:
         with:
           name: functions-serve-log
           path: functions-serve.log
-          retention-days: 14    
+          retention-days: 14
 
       # Runs even if earlier steps failed, so a failing E2E run doesn't
       # leave orphaned Docker containers / background processes on the

@@ -2,6 +2,7 @@ import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import path from "node:path";
+import { configDefaults } from "vitest/config";
 
 // We import defineConfig from "vitest/config" instead of plain "vite" —
 // it's the same function, but its TypeScript type is Vite's UserConfig
@@ -61,6 +62,9 @@ export default defineConfig({
     // Lets you write `describe`, `it`, `expect` without importing them
     // in every single test file.
     globals: true,
+
+    exclude: [...configDefaults.exclude, 
+      "**/*.integration.test.ts"],
 
     coverage: {
       provider: "v8",

@@ -1,0 +1,24 @@
+-- ============================================================================
+-- DROP DEAD COLUMN: vendors.last_known_opt_in (GLPDX-166)
+-- ============================================================================
+-- last_known_opt_in was added in the original vendor tables migration
+-- (20260704023725_create_vendor_tables.sql) as a placeholder for the
+-- "show a gray last-known pin after checkin expiry" opt-in setting.
+--
+-- A later migration (20260722235600_add_vendors_show_last_known.sql, done as
+-- GLPDX-12 prerequisite work) independently added show_last_known for the
+-- exact same purpose, without anyone checking whether a column for this
+-- concept already existed. Confirmed via a full repo grep that
+-- last_known_opt_in is referenced nowhere outside its own CREATE TABLE
+-- statement -- no app code, no other migration, no test -- so this is safe
+-- to drop outright rather than needing a data-migrating rename.
+--
+-- show_last_known is the column GLPDX-12's RLS policies and GLPDX-72's
+-- flagged UPDATE-policy conflict both reference; it is the one that stays.
+--
+-- This is a destructive change (DROP COLUMN), which is normally something to
+-- be careful with -- it's acceptable here specifically because there is no
+-- production vendor data yet and the column has zero real-world usage to
+-- lose.
+alter table public.vendors
+  drop column last_known_opt_in;

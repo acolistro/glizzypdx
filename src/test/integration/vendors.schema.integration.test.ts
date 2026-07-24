@@ -76,3 +76,33 @@ describe("vendors.show_last_known column (GLPDX-12 prerequisite)", () => {
     expect(error).not.toBeNull();
   });
 });
+
+describe("vendors.last_known_opt_in column (GLPDX-166 — dead duplicate)", () => {
+  let seededVendorIds: string[] = [];
+
+  afterEach(async () => {
+    for (const id of seededVendorIds) {
+      await serviceRole.from("vendors").delete().eq("id", id);
+    }
+    seededVendorIds = [];
+  });
+
+  it("does not exist as a column (dropped as a dead duplicate of show_last_known)", async () => {
+    // Selecting a nonexistent column should fail with a Postgres "column does not exist" error.
+    // This is a negative-schema assertion, proving something is ABSENT -- it exists so that if
+    // last_known_opt_in is ever accidentally reintroduced (e.g. a bad migration revert, or
+    // someone copy-pasting from the original GLPDX-3 migration), a test catches the two-column
+    // drift bug coming back immediately, rather than it surfacing later as confused RLS behavior.
+    const vendorId = await seedVendor();
+    seededVendorIds.push(vendorId);
+
+    const { error } = await serviceRole
+      .from("vendors")
+      .select("last_known_opt_in")
+      .eq("id", vendorId)
+      .single();
+
+    expect(error).not.toBeNull();
+    expect(error?.message).toContain("last_known_opt_in");
+  });
+});

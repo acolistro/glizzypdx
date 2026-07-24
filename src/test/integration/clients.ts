@@ -115,3 +115,54 @@ export async function createAuthedTestUser(
     },
   };
 }
+
+/**
+ * Optional per-call overrides for seedVendor(). Added for GLPDX-12: writing checkins RLS policy
+ * tests requires seeding vendors in specific states (approved vs. draft, opted into last-known
+ * display or not, owned by a specific auth user or admin-managed) rather than always getting the
+ * same "blank" vendor row.
+ *
+ * Every field is optional and independently defaults to the column's own database default if
+ * omitted (status: 'draft', show_last_known: false, owner_user_id: null) — this is why existing
+ * callers that pass nothing keep behaving exactly as they did before this was extended; nothing
+ * about the pre-GLPDX-12 call sites needs to change.
+ */
+export interface SeedVendorOverrides {
+  /** Mirrors the `vendors.status` check constraint (see 20260704023725_create_vendor_tables.sql). */
+  status?: "draft" | "submitted" | "approved" | "rejected";
+  /** Mirrors `vendors.show_last_known` (see 20260722235600_add_vendors_show_last_known.sql). */
+  show_last_known?: boolean;
+  /**
+   * Ties this vendor to a real auth user's id, so `auth.uid() = owner_user_id` RLS checks (e.g.
+   * GLPDX-12's vendor-scoped checkins INSERT policy) have something real to match against.
+   * Typically the `.id` off an AuthedTestUser returned by createAuthedTestUser().
+   */
+  owner_user_id?: string;
+}
+
+/**
+ * Creates a throwaway `vendors` row for a test to attach related rows to (checkins, etc.) or to
+ * assert directly against.
+ *
+ * Data comes from: `name` is the only NOT-NULL, no-default column on `vendors` (confirmed
+ * against the GLPDX-128 migration) -- everything else is left to its column default unless
+ * explicitly overridden via the `overrides` param.
+ *
+ * Data goes to: the returned `id` -- used as a foreign key (e.g. `checkins.vendor_id`) or as
+ * the row under test for column/RLS assertions against `vendors` itself.
+ *
+ * Always uses a service_role client internally, regardless of what the calling test is
+ * asserting -- seeding should never be subject to the RLS policies under test.
+ */
+export async function seedVendor(overrides: SeedVendorOverrides = {}): Promise<string> {
+  const { data, error } = await getServiceRoleClient()
+    .from("vendors")
+    .insert({ name: `Test Vendor ${crypto.randomUUID()}`, ...overrides })
+    .select("id")
+    .single();
+
+  if (error || !data) {
+    throw new Error(`Failed to seed test vendor: ${error?.message ?? "no data returned"}`);
+  }
+  return data.id as string;
+}

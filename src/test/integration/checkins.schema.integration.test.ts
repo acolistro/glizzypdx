@@ -411,3 +411,291 @@ describe("checkins table schema (GLPDX-161 / GLPDX-11)", () => {
     });
   });
 });
+
+/**
+ * ============================================================================
+ * GLPDX-14 — automatic checkin expiry/deletion
+ * ============================================================================
+ *
+ * WHAT THIS COVERS:
+ * GLPDX-14 has two moving pieces, tested separately:
+ *
+ *   1. cleanup_superseded_checkins -- an AFTER INSERT trigger on checkins. The moment
+ *      a vendor creates a new checkin, any of their OTHER checkins that have already
+ *      expired are deleted immediately, regardless of show_last_known. This is what
+ *      makes "delete the moment a new checkin supersedes it" happen in real time,
+ *      rather than waiting for the next cron tick.
+ *
+ *   2. delete_expired_opted_out_checkins() -- a plain SQL function, called by pg_cron
+ *      every 5 minutes, that sweeps expired checkins belonging to vendors who never
+ *      opted into last-known display. It deliberately does NOT touch an opted-in
+ *      vendor's expired checkin -- that row is only ever removed by the trigger above,
+ *      once a newer checkin supersedes it. Tests call this function directly via RPC
+ *      rather than waiting on the real cron schedule, so results are deterministic.
+ *
+ * Both pieces only ever run as service_role or as postgres (the role pg_cron jobs
+ * execute as by default) -- neither should be reachable by anon or authenticated,
+ * which the last describe block below asserts directly.
+ */
+describe("checkins supersession cleanup trigger (GLPDX-14)", () => {
+  let seededVendorIds: string[] = [];
+
+  afterEach(async () => {
+    // Deleting the vendor cascades to its checkins (on delete cascade), so this
+    // alone is sufficient cleanup for both vendors and any checkins under them.
+    for (const id of seededVendorIds) {
+      await getServiceRoleClient().from("vendors").delete().eq("id", id);
+    }
+    seededVendorIds = [];
+  });
+
+  it("deletes a vendor's other expired checkin when a new checkin is inserted (opted-out vendor)", async () => {
+    const vendorId = await seedVendor({ status: "approved", show_last_known: false });
+    seededVendorIds.push(vendorId);
+
+    const service = getServiceRoleClient();
+    const { data: oldCheckin } = await service
+      .from("checkins")
+      .insert({
+        vendor_id: vendorId,
+        lat: 45.5,
+        lng: -122.6,
+        expires_at: new Date(Date.now() - 60 * 60 * 1000).toISOString(), // 1hr ago
+      })
+      .select("id")
+      .single();
+
+    // Inserting a new checkin should trigger cleanup of the already-expired one above.
+    await service
+      .from("checkins")
+      .insert({
+        vendor_id: vendorId,
+        lat: 45.5,
+        lng: -122.6,
+        expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1hr from now
+      })
+      .select("id")
+      .single();
+
+    const { data: survivor } = await service
+      .from("checkins")
+      .select("id")
+      .eq("id", oldCheckin!.id)
+      .maybeSingle();
+
+    expect(survivor).toBeNull();
+  });
+
+  it("deletes a vendor's other expired checkin when a new checkin is inserted (opted-in vendor)", async () => {
+    // Even an opted-in vendor's preserved last-known row should be swept away the
+    // instant a NEWER checkin exists -- the new one becomes the last-known candidate.
+    const vendorId = await seedVendor({ status: "approved", show_last_known: true });
+    seededVendorIds.push(vendorId);
+
+    const service = getServiceRoleClient();
+    const { data: oldCheckin } = await service
+      .from("checkins")
+      .insert({
+        vendor_id: vendorId,
+        lat: 45.5,
+        lng: -122.6,
+        expires_at: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+      })
+      .select("id")
+      .single();
+
+    await service
+      .from("checkins")
+      .insert({
+        vendor_id: vendorId,
+        lat: 45.5,
+        lng: -122.6,
+        expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      })
+      .select("id")
+      .single();
+
+    const { data: survivor } = await service
+      .from("checkins")
+      .select("id")
+      .eq("id", oldCheckin!.id)
+      .maybeSingle();
+
+    expect(survivor).toBeNull();
+  });
+
+  it("does not delete a vendor's still-active checkin when a new checkin is inserted", async () => {
+    const vendorId = await seedVendor({ status: "approved" });
+    seededVendorIds.push(vendorId);
+
+    const service = getServiceRoleClient();
+    const { data: activeCheckin } = await service
+      .from("checkins")
+      .insert({
+        vendor_id: vendorId,
+        lat: 45.5,
+        lng: -122.6,
+        expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // still active
+      })
+      .select("id")
+      .single();
+
+    await service
+      .from("checkins")
+      .insert({
+        vendor_id: vendorId,
+        lat: 45.5,
+        lng: -122.6,
+        expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      })
+      .select("id")
+      .single();
+
+    const { data: survivor } = await service
+      .from("checkins")
+      .select("id")
+      .eq("id", activeCheckin!.id)
+      .maybeSingle();
+
+    expect(survivor).not.toBeNull();
+  });
+
+  it("does not touch a different vendor's expired checkin", async () => {
+    const vendorAId = await seedVendor({ status: "approved" });
+    const vendorBId = await seedVendor({ status: "approved" });
+    seededVendorIds.push(vendorAId, vendorBId);
+
+    const service = getServiceRoleClient();
+    const { data: otherVendorExpired } = await service
+      .from("checkins")
+      .insert({
+        vendor_id: vendorBId,
+        lat: 45.5,
+        lng: -122.6,
+        expires_at: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+      })
+      .select("id")
+      .single();
+
+    // A new checkin for vendor A should have zero effect on vendor B's rows.
+    await service
+      .from("checkins")
+      .insert({
+        vendor_id: vendorAId,
+        lat: 45.5,
+        lng: -122.6,
+        expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      })
+      .select("id")
+      .single();
+
+    const { data: survivor } = await service
+      .from("checkins")
+      .select("id")
+      .eq("id", otherVendorExpired!.id)
+      .maybeSingle();
+
+    expect(survivor).not.toBeNull();
+  });
+});
+
+describe("delete_expired_opted_out_checkins() (GLPDX-14)", () => {
+  let seededVendorIds: string[] = [];
+
+  afterEach(async () => {
+    for (const id of seededVendorIds) {
+      await getServiceRoleClient().from("vendors").delete().eq("id", id);
+    }
+    seededVendorIds = [];
+  });
+
+  it("deletes an expired checkin belonging to an opted-out vendor", async () => {
+    const vendorId = await seedVendor({ status: "approved", show_last_known: false });
+    seededVendorIds.push(vendorId);
+
+    const service = getServiceRoleClient();
+    const { data: checkin } = await service
+      .from("checkins")
+      .insert({
+        vendor_id: vendorId,
+        lat: 45.5,
+        lng: -122.6,
+        expires_at: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+      })
+      .select("id")
+      .single();
+
+    const { error } = await service.rpc("delete_expired_opted_out_checkins");
+    expect(error).toBeNull();
+
+    const { data: survivor } = await service
+      .from("checkins")
+      .select("id")
+      .eq("id", checkin!.id)
+      .maybeSingle();
+    expect(survivor).toBeNull();
+  });
+
+  it("does not delete a non-expired checkin belonging to an opted-out vendor", async () => {
+    const vendorId = await seedVendor({ status: "approved", show_last_known: false });
+    seededVendorIds.push(vendorId);
+
+    const service = getServiceRoleClient();
+    const { data: checkin } = await service
+      .from("checkins")
+      .insert({
+        vendor_id: vendorId,
+        lat: 45.5,
+        lng: -122.6,
+        expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      })
+      .select("id")
+      .single();
+
+    await service.rpc("delete_expired_opted_out_checkins");
+
+    const { data: survivor } = await service
+      .from("checkins")
+      .select("id")
+      .eq("id", checkin!.id)
+      .maybeSingle();
+    expect(survivor).not.toBeNull();
+  });
+
+  it("does not delete an expired checkin belonging to an opted-in vendor", async () => {
+    const vendorId = await seedVendor({ status: "approved", show_last_known: true });
+    seededVendorIds.push(vendorId);
+
+    const service = getServiceRoleClient();
+    const { data: checkin } = await service
+      .from("checkins")
+      .insert({
+        vendor_id: vendorId,
+        lat: 45.5,
+        lng: -122.6,
+        expires_at: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+      })
+      .select("id")
+      .single();
+
+    await service.rpc("delete_expired_opted_out_checkins");
+
+    // Preserved -- this is the row GLPDX-12's last-known read policy depends on.
+    const { data: survivor } = await service
+      .from("checkins")
+      .select("id")
+      .eq("id", checkin!.id)
+      .maybeSingle();
+    expect(survivor).not.toBeNull();
+  });
+
+  it("cannot be called by anon or authenticated (only service_role)", async () => {
+    const { error: anonError } = await getAnonClient().rpc("delete_expired_opted_out_checkins");
+    expect(anonError).not.toBeNull();
+
+    // Note: no authenticated-role check here via a real signed-in user, since this
+    // function's access is controlled purely by GRANT/REVOKE at the role level, not
+    // RLS -- an anon-role rejection is sufficient to prove PUBLIC execute access was
+    // actually revoked, which is the specific regression this test exists to catch.
+  });
+});

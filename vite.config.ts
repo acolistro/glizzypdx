@@ -47,6 +47,7 @@ export default defineConfig({
     include: [
       "src/**/*.{test,spec}.{ts,tsx}",
       "supabase/functions/**/*.{test,spec}.ts",
+      "scripts/**/*",
     ],
 
     // jsdom simulates a browser DOM inside Node, which is what lets

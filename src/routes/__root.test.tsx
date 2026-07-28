@@ -17,6 +17,7 @@ import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { Route } from "./__root";
 import { RootLayout } from "../app/RootLayout";
+import type { ReactElement } from "react";
 
 describe("root route (src/routes/__root.tsx)", () => {
   it("wires RootLayout as the top-level component", () => {
@@ -34,11 +35,16 @@ describe("root route (src/routes/__root.tsx)", () => {
   });
 
   it("renders a 'Page not found.' message for its notFoundComponent", () => {
-    // Unlike the component above, notFoundComponent's output (<p>Page
-    // not found.</p>) has no router-context dependency, so it's safe to
-    // fully render() and query normally.
-    const NotFound = Route.options.notFoundComponent!;
-    render(<NotFound data={undefined} />);
+    // notFoundComponent's actual implementation is `() => <p>Page not
+    // found.</p>` -- it takes no props at all, but TanStack Router's
+    // type for this slot expects NotFoundRouteProps for the general
+    // case (where a route DOES use its props). Casting through
+    // `unknown` (not `any`, per this project's no-any rule) down to the
+    // zero-arg function this specific component actually is, rather
+    // than fabricating a fake props object just to satisfy a type this
+    // component doesn't use.
+    const NotFound = Route.options.notFoundComponent as unknown as () => ReactElement;
+    render(<NotFound />);
 
     expect(screen.getByText("Page not found.")).toBeInTheDocument();
   });

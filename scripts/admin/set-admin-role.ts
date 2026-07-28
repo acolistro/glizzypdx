@@ -158,9 +158,17 @@ async function main(): Promise<void> {
   console.log(JSON.stringify(updateData.user.app_metadata, null, 2));
 }
 
-main().catch((err) => {
-  // Final safety net for anything not already caught above (e.g. a
-  // network failure reaching Supabase at all).
-  console.error("Unexpected error running set-admin-role script:", err);
-  process.exit(1);
-});
+// Only run main() when this file is executed directly (e.g. via
+// `node --env-file=.env --import tsx scripts/admin/set-admin-role.ts`),
+// not when imported by something else (a test file, another script).
+// Without this guard, merely importing this module would trigger a real
+// write against production — exactly what happened when Vitest's test
+// discovery imported it by mistake.
+if (process.argv[1] === new URL(import.meta.url).pathname) {
+  main().catch((err) => {
+    // Final safety net for anything not already caught above (e.g. a
+    // network failure reaching Supabase at all).
+    console.error("Unexpected error running set-admin-role script:", err);
+    process.exit(1);
+  });
+}

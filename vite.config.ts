@@ -125,6 +125,9 @@ export default defineConfig({
         "src/routes/admin/_authenticated/route.tsx",
         // src/routes/admin/_authenticated/index.tsx: thin routing glue.
         "src/routes/admin/_authenticated/index.tsx",
+        // src/routes/admin/login.tsx: thin routing glue, wiring
+        // /admin/login to the fully-tested AdminLoginForm component.
+        "src/routes/admin/login.tsx",        
         // src/main.tsx: the app's real bootstrap (createRoot, the real
         // generated routeTree.gen.ts, real Supabase-backed hooks pulled
         // in transitively). Repeated attempts (GLPDX-169) to render or

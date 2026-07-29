@@ -1,0 +1,82 @@
+/*
+  GeoCities Hotdog Stand aesthetic (Concept 2, 02-geocities.html) —
+  pink-dominant palette, Comic Sans for the loud bits, Verdana/Tahoma for
+  actually-readable body text. Mirrors InquiryForm.module.css's token
+  usage and contrast decisions exactly, since this is the same kind of
+  small-form-within-a-larger-page component. See that file's header
+  comment for the full WCAG reasoning behind each token choice below —
+  not repeated verbatim here to avoid drift between two copies of the
+  same explanation; the choices themselves ARE duplicated intentionally,
+  since both forms share identical color combinations.
+
+  No .confirmation class here (unlike InquiryForm) — this form navigates
+  into /admin on success (see AdminLoginForm.tsx's useEffect) rather than
+  replacing itself with an inline confirmation message.
+*/
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  /* Matches InquiryForm.module.css's container-width literal — see
+     that file's header comment re: no token existing for this yet. */
+  max-width: 28rem;
+  padding: var(--space-6);
+  background-color: var(--color-pink-light);
+  border: 4px dashed var(--color-pink);
+  font-family: var(--font-body);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.field label {
+  font-weight: bold;
+  color: var(--color-pink-dark);
+}
+
+.field input {
+  padding: var(--space-2);
+  border: 2px solid var(--color-pink-dark);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: var(--text-base);
+}
+
+.field input[aria-invalid="true"] {
+  border-color: var(--color-error);
+}
+
+.fieldError {
+  color: var(--color-error-dark);
+  font-size: var(--text-sm);
+  margin: 0;
+}
+
+.errorBanner {
+  padding: var(--space-3);
+  background-color: var(--color-error-bg);
+  border: 2px solid var(--color-error);
+  color: var(--color-error-dark);
+  font-weight: bold;
+}
+
+.submitButton {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: bold;
+  padding: var(--space-3) var(--space-6);
+  background-color: var(--color-mustard);
+  border: 3px solid var(--color-black);
+  border-radius: var(--radius-md);
+  box-shadow: 0 0 0 3px var(--color-pink);
+  color: var(--color-black);
+  cursor: pointer;
+}
+.submitButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

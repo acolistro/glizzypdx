@@ -112,15 +112,22 @@ export default defineConfig({
         // into separate modules specifically so it CAN be unit tested,
         // since Deno's runtime can't run this project's Node-based
         // Vitest suite directly against the entry point itself.
-        "supabase/functions/*/index.ts",
-        // src/routes/admin/route.tsx: pathless layout route whose only
-        // job is delegating to requireAdminOrRedirect() in beforeLoad.
-        // Same reasoning as the Edge Function index.ts exclusion above --
-        // it's a thin wrapper with no independent logic; the actual
-        // access-control decision is tested directly in
+       "supabase/functions/*/index.ts",
+        // src/routes/admin/route.tsx: public, unguarded pass-through
+        // layout for /admin -- no independent logic, just an Outlet.
+        "src/routes/admin/route.tsx",
+        // src/routes/admin/_authenticated/route.tsx: pathless layout
+        // route whose only job is delegating to requireAdminOrRedirect()
+        // in beforeLoad. Same reasoning as the Edge Function index.ts
+        // exclusion above -- thin wrapper, no independent logic; the
+        // actual access-control decision is tested directly in
         // requireAdminOrRedirect.test.ts instead.
-       "src/routes/admin/route.tsx",
-        "src/routes/admin/index.tsx",
+        "src/routes/admin/_authenticated/route.tsx",
+        // src/routes/admin/_authenticated/index.tsx: thin routing glue.
+        "src/routes/admin/_authenticated/index.tsx",
+        // src/routes/admin/login.tsx: thin routing glue, wiring
+        // /admin/login to the fully-tested AdminLoginForm component.
+        "src/routes/admin/login.tsx",        
         // src/main.tsx: the app's real bootstrap (createRoot, the real
         // generated routeTree.gen.ts, real Supabase-backed hooks pulled
         // in transitively). Repeated attempts (GLPDX-169) to render or

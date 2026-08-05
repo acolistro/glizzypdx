@@ -158,11 +158,18 @@ cp .env.example .env
 |---|---|
 | `supabase/functions/.env` | Local Edge Function secrets, e.g. `TURNSTILE_SECRET_KEY` (Turnstile's private verification key). Read by `supabase functions serve`. Gitignored. |
 
-**Test-only environment file:**
+**Test-only and local-only environment files:**
 
-| File | Purpose |
-|---|---|
-| `.env.test` | Used only when building for E2E (`vite build --mode test`). Points at the local Supabase instance and Cloudflare's dummy Turnstile sitekey, so E2E runs never build against production. Since Vite bakes `VITE_*` vars in at build time, E2E must use its own `--mode` and matching `.env.test` rather than relying on whatever `.env` happens to be present. Gitignored. |
+Four env files exist and are *not* interchangeable — each is read by a different tool, in a different runtime, against a different Supabase instance. The distinctions matter: `.env` points at **production**, the rest point at your **local** stack.
+
+| File | Read by | Points at | Purpose |
+|---|---|---|---|
+| `.env` | Vite dev/prod builds; `scripts/admin/set-admin-role.ts` | **Production** | The app's normal `VITE_*` config (table above), plus non-`VITE_` `SUPABASE_URL` / `SUPABASE_SECRET_KEY` used by the production-only admin role script. Gitignored. |
+| `.env.test` | `vite build --mode test` (E2E browser builds) | Local | `VITE_*` vars only. Points at the local Supabase instance and Cloudflare's dummy Turnstile sitekey, so E2E runs never build against production. Since Vite bakes `VITE_*` vars in at build time, E2E must use its own `--mode` and matching `.env.test` rather than relying on whatever `.env` happens to be present. Gitignored. |
+| `.env.test.local` | Vitest integration harness ([GLPDX-162](https://mallsoft.atlassian.net/browse/GLPDX-162)) | Local | Deliberately **not** `VITE_`-prefixed: the harness runs in Node, not the browser, and the `service_role` key must never be inlined into a client bundle. Gitignored. |
+| `.env.local` | `scripts/admin/seed-local-admin.ts` | Local | `LOCAL_SUPABASE_*` vars for seeding a local admin test account. Uses distinct variable names on purpose — `set-admin-role.ts` already claims `SUPABASE_URL` / `SUPABASE_SECRET_KEY` in `.env` for **production**, so sharing those names would mean whichever script ran last silently determined which environment the next one hit. Gitignored. |
+
+Each has a committed `.example` counterpart documenting its expected shape.
 
 ## Available scripts
 
@@ -176,6 +183,7 @@ cp .env.example .env
 | `pnpm test` | Run unit and integration tests (Vitest, watch mode by default) |
 | `pnpm test:ui` | Run Vitest with its interactive UI |
 | `pnpm coverage` | Run tests once with a coverage report |
+| `pnpm test:integration` | Run the Vitest integration suite (`*.integration.test.ts`) in a `node` environment against a running local Supabase stack — requires `supabase start` first |
 | `pnpm e2e` | Run the Playwright E2E suite against a local production build |
 | `pnpm generate-routes` | Generate `src/routeTree.gen.ts` standalone (via `@tanstack/router-cli`), without running the dev server or a full build — mainly used in CI ahead of type-checking |
 
@@ -186,8 +194,8 @@ This project uses test-driven development with full coverage required for every 
 - **Unit & integration tests** — Vitest + React Testing Library, colocated with the code they test (`Component.test.tsx` next to `Component.tsx`)
 - **E2E tests** — Playwright, run against a real local production build (`pnpm build && pnpm preview`), not the dev server, across 5 targets: Chromium, Firefox, and WebKit desktop, plus Pixel 7 and iPhone 14 mobile viewports
 - Coverage thresholds are enforced via `vite.config.ts` (currently 80% lines/functions/statements, 75% branches — placeholder values, to be revisited once a real baseline exists) — `pnpm coverage` fails on its own if coverage drops below them
-- **Local Supabase integration testing** — implemented, at least for E2E: the E2E job runs a full local Supabase stack via Docker (`supabase start`) and serves Edge Functions locally, so tests never touch production data. See [Continuous integration](#continuous-integration) for how this is wired in CI. Extending this pattern to Vitest-level integration tests (outside of E2E) is still open.
-- Cloudflare Turnstile's real widget silently refuses to render in headless/automated browsers — including with Cloudflare's own "always passes" dummy sitekey — so E2E tests stub Turnstile via `page.route()` interception rather than driving the real widget.
+- **Local Supabase integration testing** — implemented for both E2E and Vitest. The E2E job runs a full local Supabase stack via Docker (`supabase start`) and serves Edge Functions locally; the Vitest integration harness ([GLPDX-162](https://mallsoft.atlassian.net/browse/GLPDX-162)) runs against that same stack in a `node` environment, isolated from the fast jsdom unit pass. Integration tests follow the `*.integration.test.ts` convention and use `service_role`, `anon`, and authenticated client helpers to assert RLS behavior per role. Neither path ever touches production data. See [Continuous integration](#continuous-integration) for how this is wired in CI.
+- Cloudflare Turnstile's real widget silently refuses to render in headless/automated browsers — including with Cloudflare's own "always passes" dummy sitekey — so E2E tests stub Turnstile via `page.route()` interception rather than driving the real widget. The stub lives in `e2e/helpers/turnstile.ts` and is shared across specs.
 
 Run the full suite locally before opening a PR:
 

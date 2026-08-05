@@ -112,6 +112,11 @@ export async function createAuthedTestUser(
     password,
     options: { captchaToken: "integration-test-captcha-token" },
   });
+  if (signInError) {
+    // Best-effort cleanup so a failed sign-in doesn't leave an orphaned user behind.
+    await admin.auth.admin.deleteUser(user.id).catch(() => {});
+    throw new Error(`Failed to sign in test user: ${signInError.message}`);
+  }
 
   // 3. Hand back the session-bound client plus a cleanup that removes the user.
   return {

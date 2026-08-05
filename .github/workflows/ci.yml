@@ -120,6 +120,16 @@ jobs:
       - name: Start local Supabase
         run: supabase start
 
+      # admin-auth.spec.ts (GLPDX-124) logs in as a real admin account,
+      # which doesn't exist on a fresh stack. Same script used locally.
+      # Env vars are passed inline rather than via $GITHUB_ENV because
+      # $GITHUB_ENV only affects *subsequent* steps, not this one, and
+      # rather than --env-file because .env.local is gitignored — CI has
+      # no copy of it. Key is read from the running stack, same pattern
+      # as the integration job's credential export.
+      - name: Seed local admin account for E2E
+        run: LOCAL_SUPABASE_URL=http://127.0.0.1:54321 LOCAL_SUPABASE_SECRET_KEY="$(supabase status -o json | jq -r '.SERVICE_ROLE_KEY')" node --import tsx scripts/admin/seed-local-admin.ts
+
       # The integration harness (GLPDX-162) reads NON-VITE_ vars. Pull the
       # running stack's keys at runtime and expose them to the test process via
       # $GITHUB_ENV. The URL is deterministic (port from config.toml), so it's

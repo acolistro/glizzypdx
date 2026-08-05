@@ -53,7 +53,7 @@ This project intentionally avoids any Google product in the stack — no Google 
 | E2E tests | Playwright (Chromium, Firefox, WebKit + 2 mobile viewports) |
 | Package manager | pnpm |
 
-**On styling:** Tailwind was considered and deliberately dropped. The site's design direction (GeoCities Hotdog Stand — marquee banners, tiled backgrounds, table-layout feel, beveled borders) is easier and more accurate to hand-write than force into utility classes. Design tokens live as CSS custom properties, referenced by per-component `.module.css` files.
+**On styling:** Tailwind was considered and deliberately dropped. The site's design direction (Late 90s Primary Colors — bold red/blue/yellow/green palette, marquee banner, sidebar layout, hit counter skeuomorph, webring footer) is easier and more accurate to hand-write than force into utility classes. Design tokens live as CSS custom properties, referenced by per-component `.module.css` files.
 
 **A note on Vite version:** pinned to Vite 7, not the newest Vite 8. Vite 8 is a recent architectural rewrite (new Rolldown-based bundler) with a known dev-server memory regression — Vite 7 is mature and still receives full security + important-fix support as Vite's "previous major." Worth revisiting in another 6–12 months as Vite 8 matures.
 

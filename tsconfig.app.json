@@ -42,5 +42,5 @@
     }
   },
   "include": ["src"],
-  "exclude": ["src/test/integration"]
+"exclude": ["src/test/integration", "src/styles/tokens.test.ts"]
 }

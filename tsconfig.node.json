@@ -15,5 +15,5 @@
     "strict": true,
     "types": ["node"]
   },
-  "include": ["vite.config.ts", "vitest.integration.config.ts", "src/test/integration"]
+"include": ["vite.config.ts", "vitest.integration.config.ts", "src/test/integration", "src/styles/tokens.test.ts"]
 }

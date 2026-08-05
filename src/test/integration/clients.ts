@@ -99,7 +99,19 @@ export async function createAuthedTestUser(
 
   // 2. Sign in via an anon-key client to mint a session (JWT) for this user.
   const client = getAnonClient();
-  const { error: signInError } = await client.auth.signInWithPassword({ email, password });
+  // captchaToken is required because supabase/config.toml enables
+  // [auth.captcha] for the local stack (added in GLPDX-124, so the admin
+  // login E2E test exercises real captcha validation rather than a
+  // silently-skipped one). That setting applies to EVERY signInWithPassword
+  // call against this stack, not just the admin login form — including this
+  // harness. The configured secret is Cloudflare's always-passing dummy, so
+  // any non-empty token string is accepted; the value here is arbitrary.
+  // Harmless if captcha is ever disabled again — GoTrue ignores the option.
+  const { error: signInError } = await client.auth.signInWithPassword({
+    email,
+    password,
+    options: { captchaToken: "integration-test-captcha-token" },
+  });
   if (signInError) {
     // Best-effort cleanup so a failed sign-in doesn't leave an orphaned user behind.
     await admin.auth.admin.deleteUser(user.id).catch(() => {});

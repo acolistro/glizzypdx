@@ -117,6 +117,11 @@ jobs:
       # tests talk to Postgres/Auth directly via the service_role/anon clients;
       # no Edge Functions `serve` and no app build are required here (that's
       # the e2e job's concern, not this one).
+      #
+      # NOTE: this job deliberately does NOT seed the admin account. That
+      # account exists only for the E2E admin login flow (GLPDX-124); the
+      # integration harness creates its own throwaway users per test via
+      # createAuthedTestUser().
       - name: Start local Supabase
         run: supabase start
 
@@ -124,8 +129,6 @@ jobs:
       # running stack's keys at runtime and expose them to the test process via
       # $GITHUB_ENV. The URL is deterministic (port from config.toml), so it's
       # hardcoded; the keys are read dynamically rather than pasted in.
-      # NOTE: confirm the JSON keys match your CLI (v2.109.0) output —
-      # `supabase status -o json` should expose ANON_KEY and SERVICE_ROLE_KEY.
       - name: Export local Supabase credentials
         run: |
           echo "SUPABASE_URL=http://127.0.0.1:54321" >> "$GITHUB_ENV"
@@ -195,6 +198,16 @@ jobs:
       - name: Start local Supabase
         run: supabase start
 
+      # admin-auth.spec.ts (GLPDX-124) logs in as a real admin account,
+      # which doesn't exist on a fresh stack. Same script used locally.
+      # Env vars are passed inline rather than via $GITHUB_ENV because
+      # $GITHUB_ENV only affects *subsequent* steps, not this one, and
+      # rather than --env-file because .env.local is gitignored — CI has
+      # no copy of it. Key is read from the running stack, same pattern
+      # as the integration job's credential export.
+      - name: Seed local admin account for E2E
+        run: LOCAL_SUPABASE_URL=http://127.0.0.1:54321 LOCAL_SUPABASE_SECRET_KEY="$(supabase status -o json | jq -r '.SERVICE_ROLE_KEY')" node --import tsx scripts/admin/seed-local-admin.ts
+
       - name: Create supabase/functions/.env for local Edge Functions
         run: echo "TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA" > supabase/functions/.env
 
@@ -218,15 +231,20 @@ jobs:
       # these are non-sensitive/dummy values today, keeping the pattern
       # consistent means a future contributor can't accidentally commit
       # a real secret into this file out of habit). CI writes its own
-      # copy fresh each run. VITE_SUPABASE_ANON_KEY here is Supabase's
-      # well-known LOCAL DEMO anon key — identical for every local
-      # Supabase instance everywhere (it's not a secret, it's baked into
-      # the CLI's default config.toml), safe to hardcode in workflow
-      # files and version control.
+      # copy fresh each run.
+      #
+      # VITE_SUPABASE_ANON_KEY is read from the running stack rather than
+      # hardcoded. It used to be the well-known legacy demo JWT, but the
+      # CLI now issues publishable keys (sb_publishable_...) instead, and
+      # a hardcoded legacy key no longer matches what Auth accepts —
+      # which broke the admin login E2E tests while leaving the inquiry
+      # tests green (those go through an Edge Function, not Auth
+      # directly). Reading it dynamically means this can't drift again
+      # the next time the CLI changes its key format.
       - name: Create .env.test for E2E build
         run: |
           echo "VITE_SUPABASE_URL=http://127.0.0.1:54321" >> .env.test
-          echo "VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0" >> .env.test
+          echo "VITE_SUPABASE_ANON_KEY=$(supabase status -o json | jq -r '.ANON_KEY')" >> .env.test
           echo "VITE_TURNSTILE_SITE_KEY=1x00000000000000000000AA" >> .env.test
 
       - name: Run E2E tests against local production build

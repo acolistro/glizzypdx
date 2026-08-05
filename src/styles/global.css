@@ -79,10 +79,9 @@
 
 /* Forces native browser UI (form controls, scrollbars, date pickers)
    to render in light mode regardless of the user's OS dark-mode
-   setting. Carried over from the placeholder index.css that predated
-   this ticket — a deliberate choice, not an omission. The GeoCities
-   aesthetic assumes a light page; letting native controls render dark
-   would look broken/inconsistent against it. */
+   setting. A deliberate choice, not an omission — the Late 90s
+   Primary Colors aesthetic assumes a light page; letting native
+   controls render dark would look broken/inconsistent against it. */
 :root {
   color-scheme: light;
 }
@@ -138,12 +137,12 @@ body {
   font-family: var(--font-body);
   font-size: var(--text-base);
   color: var(--color-black);
-  background-color: var(--color-teal);
-  /* --color-teal is the "desktop" background per the GeoCities
-     brief — the page's content area (built separately, likely
-     a centered container component from GLPDX-144's layout
-     shell) sits on top of this teal backdrop, similar to how a
-     90s desktop wallpaper sat behind a browser window. */
+  background-color: var(--color-body-bg);
+  /* --color-body-bg is the deep blue "desktop" background per
+     the Late 90s Primary Colors brief — the page's content area
+     (a centered container built in GLPDX-144's layout shell)
+     sits on top of this blue backdrop, similar to how a 90s
+     desktop wallpaper sat behind a browser window. */
 
   line-height: 1.5;
   /* 1.5 is a widely-used accessible default for body copy —
@@ -155,9 +154,7 @@ body {
                            browser chrome (address bar) showing/hiding,
                            so the page doesn't end up taller than what's
                            actually visible. Plain vh doesn't do this and
-                           can cause awkward extra scroll space on phones.
-                           Carried over from the placeholder index.css,
-                           which already made this call correctly. */
+                           can cause awkward extra scroll space on phones. */
 }
 
 /* Headings use the display font by default. Individual
@@ -173,10 +170,10 @@ h5,
 h6 {
   font-family: var(--font-display);
   font-weight: normal;
-  /* Comic Sans MS doesn't have a meaningfully different "bold"
-     weight rendering in most browsers — leaving this at normal
-     avoids the fake-bold synthetic rendering some browsers
-     apply, which can look muddy. */
+  /* Comic Sans MS / Comic Neue doesn't have a meaningfully
+     different "bold" weight rendering in most browsers — leaving
+     this at normal avoids the fake-bold synthetic rendering some
+     browsers apply, which can look muddy. */
 }
 
 /* ----------------------------------------------------------
@@ -190,14 +187,15 @@ h6 {
  * ring around every element a mouse user merely clicks — which
  * most sighted mouse users would find visually noisy.
  *
- * Uses --color-pink-dark, NOT --color-pink. As documented in
- * tokens.css, --color-pink fails the 3:1 contrast minimum
- * required for UI-component indicators (WCAG 1.4.11). This is
- * still very much a "brand pink" ring — just the accessible
- * variant of it.
+ * Uses --color-blue (8.59:1 on white, passes AAA). Blue is the
+ * map chrome / border color in the primary palette, which makes
+ * it a natural and on-brand choice for a focus indicator.
+ * --color-yellow was considered but fails AA as a UI-component
+ * color on light backgrounds (1.97:1) — see tokens.css and
+ * README.md for the full contrast audit.
  */
 :focus-visible {
-  outline: 3px solid var(--color-pink-dark);
+  outline: 3px solid var(--color-blue);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }

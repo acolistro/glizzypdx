@@ -22,7 +22,7 @@
   /* #ff69b4 was a leftover hardcoded pink predating tokens.css and
      doesn't match the real --color-pink value (#e8918a). Token exists
      now, so the fallback was just dead weight. */
-  background-color: var(--color-pink);
+  background-color: var(--color-yellow);
 }
 
 .content {

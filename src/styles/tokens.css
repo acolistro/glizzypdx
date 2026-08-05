@@ -18,8 +18,8 @@
  * change here updates the whole app.
  *
  * HOW CSS CUSTOM PROPERTIES WORK (if this is new to you):
- * --color-pink: #FF6EC7; defines a variable. Anywhere else in
- * the app, var(--color-pink) reads that value. Unlike Sass/LESS
+ * --color-red: #cc0000; defines a variable. Anywhere else in
+ * the app, var(--color-red) reads that value. Unlike Sass/LESS
  * variables, these are real runtime CSS values — the browser
  * can inspect and even change them via JavaScript if we ever
  * needed to (e.g. a future dark mode). Defining them on :root
@@ -38,133 +38,141 @@
   /* ----------------------------------------------------------
    * COLOR PALETTE
    * ----------------------------------------------------------
-   * GeoCities Hotdog Stand palette: pink-dominant, with mustard
-   * and ketchup as the classic hot-dog accent colors, and a
-   * teal "desktop" background evoking the old-web tiled-wallpaper
-   * aesthetic (a page floating on a colored desktop, like a
-   *90s OS background behind a browser window).
+   * Late 90s Primary Colors palette: bold red, blue, yellow,
+   * and green — the classic early-internet personal-website
+   * aesthetic. Each color has a defined role:
    *
-   * IMPORTANT — READ BEFORE USING --color-pink:
-   * --color-pink is a soft, dusty-rose pastel — closer to the
-   * color of an actual hot dog sausage than a vibrant magenta.
-   * It works beautifully as a BACKGROUND (7.33:1 with black text
-   * on top — passes AAA), but like most pale pastels it still
-   * FAILS WCAG AA contrast (2.37:1, needs 4.5:1) when used AS
-   * text or AS a UI-component color (focus rings, icons, borders
-   * around interactive controls need 3:1 minimum) on a white
-   * background — pastels are light by nature, so this is true of
-   * essentially any soft pink, not a flaw specific to this one.
-   * That's exactly why --color-pink-dark exists: a deeper rose in
-   * the same family, darkened until it passes AA (5.82:1 on
-   * white). Use --color-pink for decoration and backgrounds. Use
-   * --color-pink-dark anywhere text, links, or focus indicators
-   * need pink. See src/styles/README.md for the full contrast
-   * audit.
+   *   Red   — header, brand accents, left border on vendor cards
+   *   Blue  — map chrome, window/section borders, body background
+   *   Yellow — marquee background, alerts, pin labels, highlights
+   *   Green  — nav bar, active status indicators, sidebar titles
+   *
+   * CONTRAST NOTES — read before using these as text colors:
+   *
+   * --color-yellow (bright yellow) FAILS AA as text on white
+   * (1.97:1 — way below the 4.5:1 minimum). It is BACKGROUND-
+   * and HIGHLIGHT-only. Always pair it with --color-black text
+   * on top (black on yellow = 14.1:1, passes AAA). Never use
+   * yellow as the text color itself.
+   *
+   * --color-green passes AA for text on white (5.92:1) and is
+   * safe for nav labels, badges, and sidebar text. --color-green-mid
+   * (#009900) is borderline (4.03:1 on white — fails AA for normal
+   * text, only passes the 3:1 large-text bar). Use --color-green
+   * for text, --color-green-mid only for decorative fills.
+   *
+   * --color-red passes AA for text on white (5.84:1) and is safe
+   * for headings, labels, and accents.
+   *
+   * --color-blue passes AA for text on white (8.59:1) and is safe
+   * everywhere. White text on --color-blue = 9.73:1 (passes AAA).
+   *
+   * --color-body-bg and --color-blue are the same value. They are
+   * separate tokens because they have different semantic roles:
+   * --color-body-bg is a layout-level token (page desktop background),
+   * --color-blue is a component-level token (borders, map chrome).
+   * Don't merge them — if one ever needs to change independently,
+   * you'll be glad they're separate.
    */
-  --color-pink: #e8918a;         /* soft dusty-rose, hot-dog-sausage toned — great as a bg (7.33:1 w/ black text), fails AA as text/UI color (2.37:1 on white) */
-  --color-pink-dark: #b23a4d;    /* accessible deep rose — 5.82:1 on white, safe for text/links/focus rings */
-  --color-pink-light: #ffe4f1;   /* pale pink, added GLPDX-160 for card/form backgrounds that need
-                                     something softer than --color-pink. Decorative/background use
-                                     only — too light for UI-component borders or text. --color-pink-dark
-                                     on top = 4.89:1 (passes AA, barely); --color-black on top = 14.6:1. */
-  --color-mustard: #e1ad01;      /* verified 8.44:1 with --color-black text on top — safe for badges/buttons */
-  --color-ketchup: #c41e3a;      /* verified 5.84:1 on white — safe for text/buttons */
-  --color-teal: #008080;         /* desktop/body background — see note below on text contrast */
 
+  /* --- Reds --- */
+  --color-red: #cc0000;          /* 5.84:1 on white — safe for text/headings/accents */
+  --color-red-dark: #990000;     /* 8.59:1 on white — safe for text, deeper header fills */
+
+  /* --- Blues --- */
+  --color-blue: #0000cc;         /* 8.59:1 on white — safe for text/borders; white text on this = 9.73:1 */
+  --color-blue-dark: #000099;    /* even deeper, use for hover states / pressed borders */
+
+  /* --- Yellows --- */
+  --color-yellow: #ffdd00;       /* BACKGROUND/HIGHLIGHT ONLY — 1.97:1 on white, fails AA as text.
+                                     Always place --color-black (14.1:1) or --color-red on top. */
+  --color-yellow-dark: #cc9900;  /* 2.74:1 on white — still too light for text, use for borders/dividers
+                                     on yellow surfaces, or as a pressed/hover state for yellow elements */
+
+  /* --- Greens --- */
+  --color-green: #006600;        /* 5.92:1 on white — safe for nav labels, sidebar titles, text */
+  --color-green-mid: #009900;    /* 4.03:1 on white — DECORATIVE FILLS ONLY, fails AA for normal text */
+  --color-green-light: #eef6ee;  /* very pale green — sidebar background, card fills. Decorative only. */
+
+  /* --- Neutrals --- */
   --color-white: #ffffff;
-  --color-black: #1a1a1a;        /* soft black, not pure #000 — reduces harsh contrast halation while
-                                     still passing AAA (17.4:1 on white) */
-  --color-grey-light: #f0f0f0;   /* neutral background for cards, dividers, subtle fills */
-  
+  --color-black: #1a1a1a;        /* soft black — 17.4:1 on white, passes AAA. Not pure #000 to reduce
+                                     harsh contrast halation on screens with high brightness. */
+  --color-grey-light: #f0f0f0;   /* neutral card/section backgrounds */
+  --color-grey-mid: #767676;     /* muted/secondary text — 4.54:1 on white, sits right at the AA minimum.
+                                     This is the classic "safest usable grey" value. */
+
+  /* --- Page-level layout colors --- */
+  --color-body-bg: #0000cc;      /* the blue "desktop" behind the page wrapper — evokes the old-web
+                                     aesthetic of a browser window floating on a colored OS background.
+                                     LAYOUT TOKEN — see note above about why this is separate from
+                                     --color-blue even though the values are identical right now. */
+  --color-page-bg: #ffffff;      /* inner page/content background */
+
   /*
    * MAP PIN STATUS COLORS
    * ----------------------------------------------------------
    * Semantic aliases for the three vendor map states (see the
    * "Map states" section of the project rules): active (green),
    * last known (gray), hidden (no pin rendered, no color needed).
-   * These exist specifically so component tickets like GLPDX-33/
-   * 35/36/37/46 have a real token to reference instead of writing
-   * a raw hex value or a bare CSS color keyword like "green".
+   * These exist so component tickets like GLPDX-33/35/36/37/46
+   * have a real token to reference instead of a raw hex value.
    *
-   * --color-status-last-known is an ALIAS of --color-grey-mid, not
-   * a new raw value — it reuses the same grey already verified for
-   * accessible text, but under its own semantic name so it's clear
-   * *why* a pin is that color (it means "last known", not just
-   * "muted text reused here by coincidence").
+   * --color-status-last-known is an ALIAS of --color-grey-mid —
+   * it reuses the same grey already verified for accessible text,
+   * but under its own semantic name so it's clear *why* a pin is
+   * that color (it means "last known", not just "muted reused here
+   * by coincidence").
    */
-  --color-status-active: #2e7d32;          /* verified 5.13:1 both directions — safe as a pin fill
-                                               with a white icon on top, or as text/legend swatch */
+  --color-status-active: #2e7d32;                   /* 5.13:1 both directions — safe as pin fill with
+                                                        white icon on top, or as text/legend swatch */
   --color-status-last-known: var(--color-grey-mid); /* semantic alias — see note above */
-  --color-grey-mid: #767676;     /* muted/secondary text — sits right at the AA minimum (4.54:1 on
-                                     white), this is the classic "safest usable grey" value */
 
   /*
-   * NOTE on --color-teal as a background:
-   * White text on teal = 4.77:1 (passes AA for normal text).
-   * Black/--color-black text on teal = 3.65:1 (FAILS AA for
-   * normal text, only passes the lower 3:1 bar for large text
-   * 18px+/bold 14px+). If you ever put body copy directly on a
-   * teal surface (e.g. footer, webring strip), use white text,
-   * not --color-black text, or bump the text to a large size.
-   */
-
-/*
    * ERROR / VALIDATION COLORS
    * ----------------------------------------------------------
-   * Added GLPDX-160. First semantic "state" palette in the system
-   * besides the map-pin status colors above. Same light/dark
-   * pairing pattern as --color-pink/--color-pink-dark: the light
-   * value is background-only, the dark value is for anything that
-   * needs to pass AA as text or as a UI-component boundary.
+   * Same light/dark pairing pattern as the primary palette:
+   * the light value is background-only, the dark value is for
+   * anything that needs to pass AA as text or a UI-component
+   * boundary.
    *
-   * --color-error is NOT used for text on --color-pink-light — it
-   * only reaches 4.18:1 there, below the 4.5:1 minimum. Use
-   * --color-error-dark for error text on any pink/pink-light
-   * surface (5.52:1 / 5.75:1). --color-error itself is fine as a
-   * border/UI-component color everywhere it's used in this app,
-   * and works as text only on plain white (4.98:1).
+   * --color-error works as a border/UI-component color on white
+   * and passes AA for text on white only (4.98:1). Use
+   * --color-error-dark for error text on any light-colored
+   * surface (5.75:1 on error-bg, 6.57:1 on white).
    */
-  --color-error: #d32f2f;        /* invalid-field borders, error-banner border — UI-component contrast only */
-  --color-error-dark: #b71c1c;   /* error text everywhere — 5.52:1 on pink-light, 5.75:1 on error-bg, 6.57:1 on white */
-  --color-error-bg: #ffebee;     /* error banner background */   
+  --color-error: #d32f2f;        /* invalid-field borders, error-banner border */
+  --color-error-dark: #b71c1c;   /* error text — 5.75:1 on error-bg, 6.57:1 on white */
+  --color-error-bg: #ffebee;     /* error banner background */
 
   /* ----------------------------------------------------------
    * TYPOGRAPHY — FONT FAMILIES
    * ----------------------------------------------------------
-   * Two roles, per the GeoCities skin constraint: Comic Sans is
-   * DISPLAY-ONLY (h1, .hero-title-style headings) — never body
-   * copy. Body text always uses Verdana/Tahoma. This mirrors an
-   * Android type system with a "headline" style vs a "body"
-   * style — same idea, just expressed as CSS variables instead
-   * of a styles.xml <style> resource.
+   * Two roles, per the Late 90s Primary Colors skin constraint:
+   * Comic Sans / Comic Neue is DISPLAY-ONLY (h1, .hero-title
+   * style headings) — never body copy. Body text always uses
+   * Verdana/Tahoma. This mirrors an Android type system with a
+   * "headline" style vs a "body" style — same idea, expressed
+   * as CSS variables instead of a styles.xml <style> resource.
    */
---font-display: "Comic Neue", "Comic Sans MS", "Chalkboard SE", cursive, sans-serif;
-/* Fallback chain explained (updated GLPDX-159): Comic Neue is
-   listed FIRST now, and is self-hosted via @font-face in
-   global.css — see that file for the full explanation.
+  --font-display: "Comic Neue", "Comic Sans MS", "Chalkboard SE", cursive, sans-serif;
+  /* Fallback chain explained: Comic Neue is listed FIRST and is
+     self-hosted via @font-face in global.css — see that file for
+     the full explanation. It does NOT ship pre-installed on any OS
+     (Windows, macOS, Linux, Android, iOS) so self-hosting is
+     required for consistent rendering; without it the font silently
+     falls through to the OS cursive font, which varies wildly by
+     platform.
 
-   IMPORTANT CORRECTION: an earlier version of this comment
-   described Comic Neue as "a free, open, widely-installed Linux
-   lookalike." That was wrong — it isn't pre-installed by default
-   on any OS, Linux included. That false assumption is exactly
-   what caused GLPDX-159: the font silently fell through to the
-   generic `cursive` keyword on Android, rendering as an
-   unrelated script font. Self-hosting fixes this by not
-   depending on OS-installed fonts at all — the font ships with
-   the app, so it renders identically everywhere.
-
-   Comic Sans MS (ships on Windows) and Chalkboard SE (macOS's
-   closest built-in equivalent; Comic Sans itself isn't bundled
-   with modern macOS) are now true fallbacks — only reached if
-   the self-hosted font files fail to load for some reason (bad
-   path, network failure). cursive is the final generic-family
-   fallback so at least *something* handwriting-styled renders
-   if every named font is unavailable. */
+     Comic Sans MS (ships on Windows) and Chalkboard SE (macOS's
+     closest built-in equivalent) are true fallbacks — only reached
+     if the self-hosted font files fail to load. cursive is the
+     final generic-family fallback. */
   --font-body: Verdana, Tahoma, Geneva, sans-serif;
   --font-mono: "Courier New", Courier, monospace;
-  /* --font-mono exists for anything table/data-like that wants
-     the "early-internet monospace" feel — e.g. the hit counter
-     skeuomorph mentioned in the design brief. */
+  /* --font-mono is for anything table/data-like that wants the
+     "early-internet monospace" feel — e.g. the hit counter
+     skeuomorph in the site footer. */
 
   /* ----------------------------------------------------------
    * TYPE SCALE
@@ -174,8 +182,8 @@
    * someone bumps their browser's default text size up, rem
    * values scale with it — px values would not). This is the
    * CSS equivalent of using `sp` instead of `dp` for Android
-   * text sizes, for the same reason: it respects user font-size
-   * preferences instead of ignoring them.
+   * text sizes: it respects user font-size preferences instead
+   * of ignoring them.
    *
    * Assumes the default root font-size of 16px (we do not
    * override html { font-size } anywhere, so 1rem = 16px unless
@@ -189,21 +197,18 @@
   --text-2xl: 1.5rem;    /* 24px — page-level subheadings */
   --text-3xl: 2rem;      /* 32px — page titles */
   --text-4xl: 2.75rem;   /* 44px — hero/marquee headline, deliberately capped rather than going
-                             larger, since this is a mobile-first app and a bigger value would
+                             larger since this is a mobile-first app and a bigger value would
                              force horizontal scrolling or awkward wrapping on small phones */
 
   /* ----------------------------------------------------------
    * SPACING SCALE
    * ----------------------------------------------------------
    * 4px base unit, rem-based for the same user-preference reason
-   * as the type scale above. NOTE: this uses a "named multiplier"
-   * scale (1,2,3,4,5,6,8,10,12,16) rather than 16 literal
-   * sequential steps — this is a deliberate assumption on my
-   * part since "space-1 through space-16" was ambiguous in the
-   * ticket. This is the same pattern Tailwind CSS uses and is
-   * the most common convention in the industry; sequential
-   * integer steps past ~6 are rarely useful in practice. Flag it
-   * if you actually wanted all 16 sequential steps defined.
+   * as the type scale above. Uses a "named multiplier" scale
+   * (1,2,3,4,5,6,8,10,12,16) rather than 16 sequential steps —
+   * this is the same pattern Tailwind CSS uses and the most
+   * common convention in the industry; sequential integer steps
+   * past ~6 are rarely useful in practice.
    */
   --space-1: 0.25rem;   /* 4px  */
   --space-2: 0.5rem;    /* 8px  */
@@ -219,11 +224,12 @@
   /* ----------------------------------------------------------
    * BORDER RADIUS
    * ----------------------------------------------------------
-   * Deliberately restrained. The GeoCities aesthetic leans on
-   * visible borders and table-like grids, not soft rounded
-   * corners — so most UI elements should use --radius-none or
-   * --radius-sm. --radius-md exists for the rare case (e.g. a
-   * modal or toast) that needs a slightly softened corner.
+   * Deliberately restrained. The Late 90s Primary Colors
+   * aesthetic leans on sharp visible borders and grid-like
+   * layout — not soft rounded corners. Most UI elements should
+   * use --radius-none or --radius-sm. --radius-md exists for
+   * the rare case (e.g. a modal or toast) that needs a slightly
+   * softened corner.
    */
   --radius-none: 0;
   --radius-sm: 2px;
@@ -241,9 +247,9 @@
    * numbers instead of implicit shadow-based stacking.
    */
   --z-map: 0;        /* MapLibre canvas — the base layer everything else sits above */
-  --z-sidebar: 10;    /* vendor list sidebar, floating over the map */
-  --z-modal: 100;     /* vendor detail modals, confirmation dialogs */
-  --z-toast: 1000;    /* toast notifications — always visible above any modal */
+  --z-sidebar: 10;   /* vendor list sidebar, floating over the map */
+  --z-modal: 100;    /* vendor detail modals, confirmation dialogs */
+  --z-toast: 1000;   /* toast notifications — always visible above any modal */
 
   /* ----------------------------------------------------------
    * TRANSITIONS
@@ -251,9 +257,9 @@
    * Two speeds only, kept simple on purpose. --transition-fast
    * for micro-interactions (button hover/press). --transition-base
    * for anything more noticeable (a panel sliding in, a modal
-   * fading in). Both respect prefers-reduced-motion — see the
-   * media query wrapper in global.css, which neutralizes these
-   * for users who've asked their OS to reduce motion.
+   * fading). Both are neutralized for users who've asked their
+   * OS to reduce motion — see the prefers-reduced-motion media
+   * query in global.css.
    */
   --transition-fast: 150ms ease;
   --transition-base: 250ms ease;

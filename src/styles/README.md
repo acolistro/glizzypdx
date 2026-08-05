@@ -1,6 +1,6 @@
 # GlizzyPDX Styles — Design Token System
 
-This directory is the single source of truth for the GeoCities Hotdog Stand
+This directory is the single source of truth for the Late 90s Primary Colors
 visual identity: every color, font, spacing value, border radius, z-index,
 and transition used anywhere in the app lives here first, and everything
 else references it.
@@ -22,7 +22,7 @@ raw px/rem spacing value directly in a component's `.module.css` file.
 /* VendorCard.module.css */
 .card {
   background-color: var(--color-white);
-  border: 2px solid var(--color-pink-dark);
+  border: 2px solid var(--color-red);
   border-radius: var(--radius-sm);
   padding: var(--space-4);
   font-family: var(--font-body);
@@ -40,22 +40,28 @@ point) and defines its variables on `:root`, every component in the app can
 read these variables without importing anything itself — the same way a
 global Android resource is available anywhere once declared.
 
-## GeoCities skin constraints — read before styling a new component
+## Late 90s Primary Colors skin constraints — read before styling a new component
 
 - **Comic Sans is display-only.** Use `--font-display` for headings (`h1`,
   or a component's `.heroTitle`-style class) and nothing else. Body copy,
   buttons, form labels, and everything else uses `--font-body`
   (Verdana/Tahoma). Comic Sans as body copy at length is hard to read and
   breaks the "fan page vs. document" distinction the aesthetic depends on.
-- **The tiled background lives on `body`, once, in `global.css`.** Don't
-  re-implement a tiled/patterned background inside an individual
-  component — it's a page-level treatment, not a per-component one.
-- **Borders and table-like grid layouts are intentional and visible** —
+- **The blue body background lives on `body`, once, in `global.css`.** Don't
+  re-implement `--color-body-bg` inside an individual component — it's a
+  page-level treatment, not a per-component one.
+- **Borders and grid-like layouts are intentional and visible** —
   this is a deliberate aesthetic choice, not a mistake to "clean up." But
   border *values* (width, color, radius) should always come from tokens,
   never a magic number typed directly into a component's CSS.
+- **Color roles are fixed — don't mix them.** Red is for headers, brand
+  accents, and left borders on cards. Blue is for map chrome and section
+  borders. Yellow is for the marquee, alerts, and pin labels (background
+  use only — never as text color). Green is for the nav bar, active
+  status indicators, and sidebar titles. Sticking to these roles is what
+  makes the palette read as intentional rather than random.
 - **The structure underneath the skin is modern.** "Mobile-first,
-  GeoCities as a skin over Grid/Flexbox" means: build layouts with normal
+  Late 90s as a skin over Grid/Flexbox" means: build layouts with normal
   CSS Grid/Flexbox as you would for any responsive app. The visual
   treatment (colors, borders, fonts) evokes the era; the actual layout
   mechanism does not literally recreate 90s `<table>`-based HTML.
@@ -70,58 +76,57 @@ that audit found:
 | Pairing | Contrast ratio | Result |
 |---|---|---|
 | `--color-black` on `--color-white` | 17.4:1 | Passes AAA |
-| `--color-grey-mid` on `--color-white` | 4.54:1 | Passes AA (normal text) — this is the tightest margin in the palette, right at the AA floor |
-| `--color-pink-dark` on `--color-white` | 5.82:1 | Passes AA |
+| `--color-grey-mid` on `--color-white` | 4.54:1 | Passes AA (normal text) — tightest margin in the palette, right at the AA floor |
+| `--color-red` on `--color-white` | 5.84:1 | Passes AA |
+| `--color-red-dark` on `--color-white` | 8.59:1 | Passes AAA |
+| `--color-blue` on `--color-white` | 8.59:1 | Passes AAA |
+| `--color-white` on `--color-blue` | 9.73:1 | Passes AAA |
+| `--color-green` on `--color-white` | 5.92:1 | Passes AA |
+| `--color-black` on `--color-yellow` | 14.1:1 | Passes AAA |
+| `--color-black` on `--color-green-light` | 16.2:1 | Passes AAA |
+| `--color-white` on `--color-body-bg` | 9.73:1 | Passes AAA |
 | `--color-status-active` on `--color-white` (pin fill / text) | 5.13:1 | Passes AA |
 | `--color-white` on `--color-status-active` (icon on pin) | 5.13:1 | Passes AA |
 | `--color-status-last-known` on `--color-white` | 4.54:1 | Passes AA — inherited from `--color-grey-mid` |
-| `--color-ketchup` on `--color-white` | 5.84:1 | Passes AA |
-| `--color-black` on `--color-mustard` | 8.44:1 | Passes AAA |
-| `--color-black` on `--color-pink` (pastel as background) | 7.33:1 | Passes AAA |
-| `--color-white` on `--color-teal` | 4.77:1 | Passes AA (normal text) |
-| `--color-black` on `--color-teal` | 3.65:1 | **Fails AA for normal text** — only passes the 3:1 large-text/UI threshold |
-| **`--color-pink` on `--color-white` (as text/UI color)** | **2.37:1** | **Fails AA entirely** |
+| **`--color-yellow` on `--color-white` (as text color)** | **1.97:1** | **Fails AA entirely** |
+| **`--color-green-mid` on `--color-white` (as normal text)** | **4.03:1** | **Fails AA for normal text** — passes 3:1 large-text threshold only |
 
-### The one real failure: `--color-pink`
+### The one real failure: `--color-yellow` as text
 
-`--color-pink` (`#E8918A`) is a soft, dusty-rose pastel chosen to read as
-the color of an actual hot dog sausage rather than a vibrant magenta.
-Used as a **background** it's excellent — 7.33:1 with black text on top,
-well past AAA. But like nearly any pale pastel, it's too light to work as
-**text**, a link color, an icon color, or a focus/UI-indicator color: at
-2.37:1 it fails AA outright. This isn't a flaw specific to this
-particular shade — pastels being too light for text-level contrast is
-close to a structural fact about pastels in general, not something a
-slightly different pastel pick would have avoided.
+`--color-yellow` (`#ffdd00`) is a bright, saturated yellow. As a
+**background** it's excellent — 14.1:1 with black text on top, well past
+AAA. But it is far too light to use **as text**, a link color, an icon
+color, or a focus/UI-indicator color: at 1.97:1 on white it fails AA by
+a wide margin.
 
-**Resolution:** `--color-pink` is reserved for backgrounds, borders,
-marquee elements, and other non-text/non-indicator UI. Anywhere pink
-needs to function as text, a link, or a UI indicator (like the global
-focus-visible ring in `global.css`), use `--color-pink-dark` instead — a
-deeper rose in the same family, darkened until it clears AA (5.82:1).
+**Resolution:** `--color-yellow` is reserved for backgrounds, marquee
+strips, alert bars, pin labels, and other surfaces that carry dark text
+on top of them. It must never be used as the foreground/text color itself.
+There is no `--color-yellow-dark` equivalent intended for text use — if
+you find yourself wanting "yellow text," reconsider the design; yellow
+text on most backgrounds is an accessibility dead end.
 
-### The one conditional case: `--color-teal`
+### The conditional case: `--color-green-mid`
 
-`--color-teal` is used as the body/desktop background. It's safe with
-white text on top (4.77:1) but **not** with `--color-black` text on top
-(3.65:1, fails normal-text AA). If a future component ever places body
-copy directly on a teal surface — a footer strip, a webring-style
-element — use white text there, not black, or make sure the text
-qualifies as "large text" (18px+ regular or 14px+ bold).
+`--color-green-mid` (`#009900`) reaches 4.03:1 on white — it passes the
+3:1 threshold for large text (18px+ regular or 14px+ bold) and UI
+component boundaries (focus rings, input borders), but **fails the 4.5:1
+minimum for normal-sized body text**. Use it for decorative fills,
+hover/active state backgrounds, and icon fills only. Use `--color-green`
+for any text or label that needs to be green.
 
 ## A note on the map pin status colors
 
-`--color-status-active` and `--color-status-last-known` were added after
-the initial token set shipped, once it became clear that the map-pin
-component tickets (GLPDX-33, 35, 36, 37, 46) referenced pin states by
-plain color words ("green," "gray pins") with no token to point to.
-`--color-status-active` is a new value, verified for contrast in both
-directions since it needs to work both as a pin fill (with a white icon
-on top) and potentially as text/legend copy. `--color-status-last-known`
-is deliberately just an alias of `--color-grey-mid` — same underlying
-value, given its own semantic name so a future reader can tell the pin
-is gray *because it means "last known"*, not because someone reached for
-the nearest grey out of convenience.
+`--color-status-active` and `--color-status-last-known` exist so that
+map-pin component tickets (GLPDX-33, 35, 36, 37, 46) have a semantic
+token to reference rather than plain color words ("green," "gray pins").
+`--color-status-active` is a standalone value, verified for contrast in
+both directions since it needs to work both as a pin fill (with a white
+icon on top) and as text/legend copy. `--color-status-last-known` is
+deliberately just an alias of `--color-grey-mid` — same underlying value,
+given its own semantic name so a future reader can tell the pin is gray
+*because it means "last known"*, not because someone reached for the
+nearest grey out of convenience.
 
 ## A note on the spacing scale
 

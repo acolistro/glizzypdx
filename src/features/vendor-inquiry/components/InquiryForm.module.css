@@ -34,12 +34,12 @@
      should exist. */
   max-width: 28rem;
   padding: var(--space-6);
-  background-color: var(--color-pink-light);
+  background-color: var(--color-page-bg);
   /* Decorative frame, not a UI-component boundary (WCAG 1.4.11 only
      governs borders that convey required functional information,
      like an input's edges) — so the softer --color-pink is fine
      here even though it wouldn't pass the 3:1 UI-component bar. */
-  border: 4px dashed var(--color-pink);
+  border: 4px dashed var(--color-red);
   font-family: var(--font-body);
 }
 
@@ -53,7 +53,7 @@
   font-weight: bold;
   /* On --color-pink-light: --color-pink-dark clears 4.5:1 (4.89:1).
      Plain --color-pink would not. */
-  color: var(--color-pink-dark);
+  color: var(--color-red);
 }
 
 .field input,
@@ -62,7 +62,7 @@
   /* This border needs 3:1 — it's how a sighted user identifies the
      input's boundary. --color-pink-dark clears it easily (5.82:1 on
      white); --color-pink (2.37:1) would not. */
-  border: 2px solid var(--color-pink-dark);
+  border: 2px solid var(--color-red);
   /* 4px has no exact radius token (--radius-sm=2px, --radius-md=6px).
      Using --radius-sm to match the GeoCities brief's preference for
      mostly-square corners — flag if 6px was actually intended. */
@@ -99,7 +99,7 @@
   font-size: var(--text-lg);
   font-weight: bold;
   padding: var(--space-3) var(--space-6);
-  background-color: var(--color-mustard);
+  background-color: var(--color-yellow);
   /* Functional boundary — must pass 3:1, and does (8.44:1 vs
      --color-black text). This is the border a screen reader /
      keyboard user's focus outline logic treats as "the button's
@@ -110,7 +110,7 @@
      here doesn't define the component's edge, so it's exempt from
      the 3:1 non-text contrast rule. Restores pink to the button
      without reintroducing the 2.82:1 failure a pink border had. */
-  box-shadow: 0 0 0 3px var(--color-pink);
+  box-shadow: 0 0 0 3px var(--color-yellow);
   color: var(--color-black);
   cursor: pointer;
 }
@@ -121,12 +121,12 @@
 
 .confirmation {
   padding: var(--space-8);
-  background-color: var(--color-pink-light);
-  border: 4px dashed var(--color-pink);
+  background-color: var(--color-page-bg);
+  border: 4px dashed var(--color-red);
   text-align: center;
   font-family: var(--font-body);
   font-weight: bold;
   /* Same reasoning as .field label: --color-pink-dark clears 4.5:1
      on --color-pink-light (4.89:1), --color-pink would not. */
-  color: var(--color-pink-dark);
+  color: var(--color-red);
 }

@@ -1,17 +1,27 @@
 /*
-  GeoCities Hotdog Stand aesthetic (Concept 2, 02-geocities.html) —
-  pink-dominant palette, Comic Sans for the loud bits, Verdana/Tahoma for
-  actually-readable body text. Mirrors InquiryForm.module.css's token
-  usage and contrast decisions exactly, since this is the same kind of
-  small-form-within-a-larger-page component. See that file's header
-  comment for the full WCAG reasoning behind each token choice below —
-  not repeated verbatim here to avoid drift between two copies of the
-  same explanation; the choices themselves ARE duplicated intentionally,
-  since both forms share identical color combinations.
+  Late 90s Primary Colors aesthetic (Concept 6, 06-primary-colors.html) —
+  bold primary palette, Comic Sans/Comic Neue for the loud bits,
+  Verdana/Tahoma for actually-readable body text. Mirrors
+  InquiryForm.module.css's token usage and contrast decisions exactly,
+  since this is the same kind of small-form-within-a-larger-page
+  component. See that file's header comment for the full contrast
+  reasoning behind each token choice below — not repeated verbatim
+  here to avoid drift between two copies of the same explanation; the
+  choices themselves ARE duplicated intentionally, since both forms
+  share identical color combinations.
 
-  No .confirmation class here (unlike InquiryForm) — this form navigates
-  into /admin on success (see AdminLoginForm.tsx's useEffect) rather than
-  replacing itself with an inline confirmation message.
+  No .confirmation class here (unlike InquiryForm) — this form
+  navigates into /admin on success (see AdminLoginForm.tsx's
+  useEffect) rather than replacing itself with an inline confirmation
+  message.
+
+  GLPDX-171: border WIDTHS retrofitted from raw px values to the
+  --border-* tokens in tokens.css. .submitButton's border was 3px,
+  same as InquiryForm's — snapped to --border-thin (2px) for the same
+  reason: no token matched 3px, and adding a fifth token for two
+  consumers wasn't worth it. The decorative box-shadow ring stays a
+  literal 3px — see InquiryForm.module.css's header note on why that's
+  outside this ticket's scope.
 */
 
 .form {
@@ -23,7 +33,7 @@
   max-width: 28rem;
   padding: var(--space-6);
   background-color: var(--color-page-bg);
-  border: 4px dashed var(--color-red);
+  border: var(--border-thick) dashed var(--color-red);
   font-family: var(--font-body);
 }
 
@@ -40,7 +50,7 @@
 
 .field input {
   padding: var(--space-2);
-  border: 2px solid var(--color-red);
+  border: var(--border-thin) solid var(--color-red);
   border-radius: var(--radius-sm);
   font-family: inherit;
   font-size: var(--text-base);
@@ -59,7 +69,7 @@
 .errorBanner {
   padding: var(--space-3);
   background-color: var(--color-error-bg);
-  border: 2px solid var(--color-error);
+  border: var(--border-thin) solid var(--color-error);
   color: var(--color-error-dark);
   font-weight: bold;
 }
@@ -70,7 +80,7 @@
   font-weight: bold;
   padding: var(--space-3) var(--space-6);
   background-color: var(--color-yellow);
-  border: 3px solid var(--color-black);
+  border: var(--border-thin) solid var(--color-black);
   border-radius: var(--radius-md);
   box-shadow: 0 0 0 3px var(--color-red);
   color: var(--color-black);

@@ -222,6 +222,33 @@
   --space-16: 4rem;     /* 64px */
 
   /* ----------------------------------------------------------
+   * BORDER WIDTHS
+   * ----------------------------------------------------------
+   * Width-only tokens — deliberately NOT full shorthand (e.g.
+   * NOT "2px solid"). A width-only token composes cleanly into
+   * border / border-<side> / outline without baking in a style
+   * value, e.g.:
+   *
+   *   border: var(--border-thin) solid var(--color-red);
+   *   outline: var(--border-thick) solid var(--color-blue);
+   *
+   * Full shorthand would force border: var(--border-thin)
+   * var(--color-red) — reads like a missing value — and
+   * couldn't be reused for outline-width or border-left-width
+   * without dragging "solid" along with it.
+   *
+   * Values below match the Late 90s Primary Colors mockup
+   * (06-primary-colors.html) exactly:
+   *   .page        { border: 5px solid #ffdd00; outline: 4px solid #cc0000; }
+   *   .welcome-box { border-left: 6px solid #cc0000; }
+   *   .vendor-row  { border: 2px solid #0000cc; border-left: 5px solid #cc0000; }
+   */
+  --border-thin: 2px;         /* .vendor-row border, form field borders */
+  --border-thick: 4px;        /* page wrapper outline */
+  --border-accent: 5px;       /* page wrapper border, .vendor-row left accent */
+  --border-left-accent: 6px;  /* .welcome-box left accent */
+
+  /* ----------------------------------------------------------
    * BORDER RADIUS
    * ----------------------------------------------------------
    * Deliberately restrained. The Late 90s Primary Colors

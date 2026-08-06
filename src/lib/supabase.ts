@@ -14,16 +14,16 @@ import { createClient } from "@supabase/supabase-js";
 // Supabase's Row Level Security policies are what actually protect data,
 // not keeping this key secret.)
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 // Fail loudly and immediately if these are missing, rather than letting
 // the app boot into a broken state where every Supabase call mysteriously
 // fails later. This is a deliberate tradeoff: a crash on startup is more
 // debuggable than a silent runtime error deep in a component tree.
-if (!supabaseUrl || !supabaseAnonKey) {
+if (!supabaseUrl || !supabasePublishableKey) {
   throw new Error(
     "Missing Supabase environment variables. Check that VITE_SUPABASE_URL " +
-      "and VITE_SUPABASE_ANON_KEY are set in your .env file (see .env.example).",
+      "and VITE_SUPABASE_PUBLISHABLE_KEY are set in your .env file (see .env.example).",
   );
 }
 
@@ -32,4 +32,4 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // supabase.from("checkins").*, etc. Exported as a named export (not
 // default) so every import site explicitly writes `{ supabase }`,
 // making it obvious at a glance what's being imported.
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabasePublishableKey);

@@ -67,7 +67,7 @@ jobs:
       - name: Run unit tests with coverage
         env:
           VITE_SUPABASE_URL: https://placeholder.supabase.co
-          VITE_SUPABASE_ANON_KEY: placeholder-anon-key
+          VITE_SUPABASE_PUBLISHABLE_KEY: placeholder-publishable-key
         run: pnpm coverage
 
       - name: Upload coverage report
@@ -233,7 +233,7 @@ jobs:
       # a real secret into this file out of habit). CI writes its own
       # copy fresh each run.
       #
-      # VITE_SUPABASE_ANON_KEY is read from the running stack rather than
+      # VITE_SUPABASE_PUBLISHABLE_KEY is read from the running stack rather than
       # hardcoded. It used to be the well-known legacy demo JWT, but the
       # CLI now issues publishable keys (sb_publishable_...) instead, and
       # a hardcoded legacy key no longer matches what Auth accepts —
@@ -244,7 +244,7 @@ jobs:
       - name: Create .env.test for E2E build
         run: |
           echo "VITE_SUPABASE_URL=http://127.0.0.1:54321" >> .env.test
-          echo "VITE_SUPABASE_ANON_KEY=$(supabase status -o json | jq -r '.ANON_KEY')" >> .env.test
+          echo "VITE_SUPABASE_PUBLISHABLE_KEY=$(supabase status -o json | jq -r '.ANON_KEY')" >> .env.test
           echo "VITE_TURNSTILE_SITE_KEY=1x00000000000000000000AA" >> .env.test
 
       - name: Run E2E tests against local production build

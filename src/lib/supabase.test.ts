@@ -1,7 +1,7 @@
 // src/lib/supabase.test.ts
 //
 // WHAT THIS FILE DOES: Tests supabase.ts's one real piece of logic — the
-// guard clause that throws if VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY
+// guard clause that throws if VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY
 // are missing at module-load time. Everything else in supabase.ts is a
 // single createClient() call with no branching, so this guard is the only
 // thing worth asserting against.
@@ -43,7 +43,7 @@ describe("supabase client initialization", () => {
 
   it("creates a client without throwing when both env vars are present", async () => {
     vi.stubEnv("VITE_SUPABASE_URL", "https://example.supabase.co");
-    vi.stubEnv("VITE_SUPABASE_ANON_KEY", "fake-anon-key-for-testing");
+    vi.stubEnv("VITE_SUPABASE_PUBLISHABLE_KEY", "fake-anon-key-for-testing");
 
     const { supabase } = await import("./supabase");
 
@@ -57,7 +57,7 @@ describe("supabase client initialization", () => {
 
   it("throws a clear error when VITE_SUPABASE_URL is missing", async () => {
     vi.stubEnv("VITE_SUPABASE_URL", "");
-    vi.stubEnv("VITE_SUPABASE_ANON_KEY", "fake-anon-key-for-testing");
+    vi.stubEnv("VITE_SUPABASE_PUBLISHABLE_KEY", "fake-anon-key-for-testing");
 
     // The throw happens during module evaluation, so importing itself is
     // the operation that can reject — that's why we assert against the
@@ -67,9 +67,9 @@ describe("supabase client initialization", () => {
     );
   });
 
-  it("throws a clear error when VITE_SUPABASE_ANON_KEY is missing", async () => {
+  it("throws a clear error when VITE_SUPABASE_PUBLISHABLE_KEY is missing", async () => {
     vi.stubEnv("VITE_SUPABASE_URL", "https://example.supabase.co");
-    vi.stubEnv("VITE_SUPABASE_ANON_KEY", "");
+    vi.stubEnv("VITE_SUPABASE_PUBLISHABLE_KEY", "");
 
     await expect(import("./supabase")).rejects.toThrow(
       /Missing Supabase environment variables/,

@@ -1,6 +1,9 @@
 /**
  * RootLayout.module.css
  * GLPDX-152 — retrofit to real design tokens (see src/styles/tokens.css)
+ * GLPDX-171 — page wrapper (border/outline frame + mobile full-bleed
+ * bottom accent), tagline font-inheritance fix, border-width token
+ * retrofit for .webring, and a font-family fallback cleanup.
  */
 
 .page {
@@ -10,6 +13,60 @@
      address bar, causing a jump/scrollbar flash as it shows/hides on
      scroll. 100dvh tracks the actual visible viewport instead. */
   min-height: 100dvh;
+
+  /* Page wrapper per the Late 90s Primary Colors mockup
+     (06-primary-colors.html) — a "browser window" floating centered on
+     the blue --color-body-bg backdrop (set on <body> in global.css).
+
+     width uses min() instead of max-width so there's ALWAYS at least
+     (--border-thick + --space-2) = 12px of horizontal breathing room on
+     each side, at every viewport width — not just above 920px. Without
+     this, the outline below would clip or cause horizontal scroll at
+     any width under ~928px: outline always paints outside the border
+     box regardless of box-sizing, and margin-inline:auto only creates
+     space once the box is already narrower than its cap. */
+  width: min(920px, calc(100% - 2 * (var(--border-thick) + var(--space-2))));
+  margin: var(--space-4) auto var(--space-10);
+  background: var(--color-page-bg);
+  border: var(--border-accent) solid var(--color-yellow);
+  outline: var(--border-thick) solid var(--color-red);
+}
+
+.mobileAccent {
+  /* Hidden above 599px — only relevant to the full-bleed mobile
+     treatment above. Always present in the DOM (not conditionally
+     rendered by JS) so this is pure CSS responsive behavior with no
+     media-query listener needed. Purely decorative — see the
+     aria-hidden on its element in RootLayout.tsx. */
+  display: none;
+  width: 100%;
+  height: var(--border-thick);
+  background-color: var(--color-red);
+}
+
+/* Below 600px (matches the mockup's own sidebar/main grid breakpoint):
+   full-bleed. No margin, no border, no outline — there's no blue
+   backdrop showing around the page at this width for a "floating
+   window" frame to make sense of, and the frame can't render full-bleed
+   safely anyway (zero margin means the outline has nowhere to paint).
+   Replaced with a two-tone bottom accent: a yellow border-bottom
+   directly on .page, plus a real sibling element (.mobileAccent) for
+   the red stripe. Deliberately NOT outline or box-shadow for that red
+   stripe — both paint outside the layout box and reintroduce the same
+   overflow risk this rule exists to avoid. A real element with a real
+   background-color cannot overflow its own declared width. */
+@media (max-width: 599px) {
+  .page {
+    width: 100%;
+    margin: 0;
+    border: none;
+    outline: none;
+    border-bottom: var(--border-accent) solid var(--color-yellow);
+  }
+
+  .mobileAccent {
+    display: block;
+  }
 }
 
 .marquee {
@@ -18,10 +75,11 @@
      --space-2 is the real token for the same 0.5rem/8px value. */
   padding: var(--space-2);
   text-align: center;
-  font-family: var(--font-display, "Comic Sans MS", cursive);
-  /* #ff69b4 was a leftover hardcoded pink predating tokens.css and
-     doesn't match the real --color-pink value (#e8918a). Token exists
-     now, so the fallback was just dead weight. */
+  /* Fallback arg dropped — --font-display is a required token
+     (enforced by tokens.test.ts) and already carries its own full
+     fallback chain, so a second fallback here was redundant and
+     inconsistent with how every other component references it. */
+  font-family: var(--font-display);
   background-color: var(--color-yellow);
 }
 
@@ -34,7 +92,8 @@
 .footer {
   padding: var(--space-2);
   text-align: center;
-  font-family: var(--font-body, "Verdana", sans-serif);
+  /* Fallback arg dropped — see .marquee's comment above. */
+  font-family: var(--font-body);
   font-size: var(--text-sm); /* 0.875rem — closest scale value to the old 0.85rem hardcode; also covers .hitCounter and .webring by inheritance */
 }
 
@@ -52,7 +111,11 @@
 .webring {
   margin-top: var(--space-2);
   padding-top: var(--space-2);
-  border-top: 1px solid var(--color-grey-mid);
+  /* GLPDX-171: was a raw 1px, which matched no border-width token.
+     Snapped to --border-thin (2px) rather than adding a fifth token
+     for a single consumer — the visual difference on a 1px hairline
+     divider is negligible. */
+  border-top: var(--border-thin) solid var(--color-grey-mid);
 }
 
 .siteTitle {
@@ -63,6 +126,13 @@
 }
 
 .tagline {
+  /* GLPDX-171: the tagline was rendering in Comic Neue/Comic Sans
+     instead of the body font. Root cause: .tagline never declared its
+     own font-family, so it inherited .marquee's — which is meant for
+     .siteTitle, not for every child of the header. Explicit override
+     fixes it regardless of what .marquee's own font-family is set to
+     in the future. */
+  font-family: var(--font-body);
   /* Not on the ticket's explicit list, but same category of bug as the
      spacing fixes above: a hardcoded rem value instead of a token.
      0.25rem is an exact match for --space-1. */

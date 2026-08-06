@@ -168,6 +168,23 @@ function stripFontFaceBlocks(source: string): string {
 const HEX_COLOR =
   /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})\b/g;
 
+  /**
+ * CSS properties where a bare pixel value is a token violation
+ * (GLPDX-171). Deliberately narrow and matched on property NAME
+ * first: border-radius, outline-offset, and similar are legitimately
+ * px-valued properties and must never be inspected by this rule at
+ * all — only true border/outline WIDTH properties are listed here.
+ */
+const BORDER_WIDTH_PROPERTY =
+  /^\s*(border|border-top|border-right|border-bottom|border-left|border-width|border-top-width|border-right-width|border-bottom-width|border-left-width|outline|outline-width)\s*:\s*([^;]+);/;
+
+/**
+ * A bare `<number>px` inside a matched border/outline declaration's
+ * value — i.e. a width typed as a literal instead of routed through
+ * var(--border-*). Doesn't fire on var(--border-thin), since the
+ * token's own px value lives in tokens.css, not here.
+ */
+const RAW_PX = /\b\d+(?:\.\d+)?px\b/;
 /**
  * CSS-wide keywords that are valid font-family values without
  * referencing a token.
@@ -246,6 +263,12 @@ const REQUIRED_TOKENS = {
     "--space-10",
     "--space-12",
     "--space-16",
+  ],
+  border: [
+    "--border-thin",
+    "--border-thick",
+    "--border-accent",
+    "--border-left-accent",
   ],
   radius: ["--radius-none", "--radius-sm", "--radius-md"],
   zIndex: ["--z-map", "--z-sidebar", "--z-modal", "--z-toast"],
@@ -386,6 +409,30 @@ describe("component styles — no raw values outside the token layer (GLPDX-170)
       source.split("\n").forEach((line, index) => {
         const declaration = line.match(/fontFamily\s*:\s*([^,}]+)/);
         if (declaration && !isAllowedFontFamilyValue(declaration[1])) {
+          violations.push(
+            `${relative(srcDir, file)}:${index + 1} → ${declaration[0].trim()}`,
+          );
+        }
+      });
+    }
+
+    expect(violations).toEqual([]);
+  });
+
+  it("contains no hardcoded pixel border/outline widths in CSS", () => {
+    // Mirrors the hex-color and font-family checks above, but for
+    // border/outline widths (GLPDX-171). Matches on property NAME
+    // first via BORDER_WIDTH_PROPERTY, so border-radius and
+    // outline-offset — which are legitimately px-valued — are never
+    // even inspected by this rule.
+    const violations: string[] = [];
+
+    for (const file of cssFiles) {
+      const source = stripCssComments(readFileSync(file, "utf8"));
+
+      source.split("\n").forEach((line, index) => {
+        const declaration = line.match(BORDER_WIDTH_PROPERTY);
+        if (declaration && RAW_PX.test(declaration[2])) {
           violations.push(
             `${relative(srcDir, file)}:${index + 1} → ${declaration[0].trim()}`,
           );

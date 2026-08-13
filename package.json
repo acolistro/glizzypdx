@@ -18,7 +18,9 @@
     "coverage": "vitest run --coverage",
     "test:integration": "vitest run --config vitest.integration.config.ts --passWithNoTests",
     "e2e": "playwright test",
-    "generate-routes": "tsr generate"
+    "generate-routes": "tsr generate",
+    "verify": "pnpm lint && pnpm exec tsc -b && pnpm coverage",
+    "verify:full": "pnpm verify && pnpm test:integration && pnpm e2e"
   },
   "dependencies": {
     "@marsidev/react-turnstile": "^1.5.3",

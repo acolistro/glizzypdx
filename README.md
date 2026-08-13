@@ -145,7 +145,7 @@ cp .env.example .env
 | Variable | Description |
 |---|---|
 | `VITE_SUPABASE_URL` | Your Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | Supabase anonymous/public key |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable key |
 | `VITE_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key (public), used by the vendor inquiry form widget |
 | `VITE_STADIA_MAPS_API_KEY` | API key for map tile provider *(not yet consumed by any code — reserved for the map feature)* |
 | `VITE_ANALYTICS_DOMAIN` | Domain configured in Plausible/Umami *(not yet consumed by any code)* |
@@ -166,7 +166,7 @@ Four env files exist and are *not* interchangeable — each is read by a differe
 |---|---|---|---|
 | `.env` | Vite dev/prod builds; `scripts/admin/set-admin-role.ts` | **Production** | The app's normal `VITE_*` config (table above), plus non-`VITE_` `SUPABASE_URL` / `SUPABASE_SECRET_KEY` used by the production-only admin role script. Gitignored. |
 | `.env.test` | `vite build --mode test` (E2E browser builds) | Local | `VITE_*` vars only. Points at the local Supabase instance and Cloudflare's dummy Turnstile sitekey, so E2E runs never build against production. Since Vite bakes `VITE_*` vars in at build time, E2E must use its own `--mode` and matching `.env.test` rather than relying on whatever `.env` happens to be present. Gitignored. |
-| `.env.test.local` | Vitest integration harness ([GLPDX-162](https://mallsoft.atlassian.net/browse/GLPDX-162)) | Local | Deliberately **not** `VITE_`-prefixed: the harness runs in Node, not the browser, and the `service_role` key must never be inlined into a client bundle. Gitignored. |
+| `.env.test.local` | Vitest integration harness ([GLPDX-162](https://mallsoft.atlassian.net/browse/GLPDX-162)) | Local | Deliberately **not** `VITE_`-prefixed: the harness runs in Node, not the browser, and the `service_role` key must never be inlined into a client bundle. Gitignored. **Must be populated before running `pnpm test:integration` or `pnpm verify:full`** — it isn't generated automatically, and the integration suite will fail against an empty/missing file. See `.env.test.local.example` for the expected shape. |
 | `.env.local` | `scripts/admin/seed-local-admin.ts` | Local | `LOCAL_SUPABASE_*` vars for seeding a local admin test account. Uses distinct variable names on purpose — `set-admin-role.ts` already claims `SUPABASE_URL` / `SUPABASE_SECRET_KEY` in `.env` for **production**, so sharing those names would mean whichever script ran last silently determined which environment the next one hit. Gitignored. |
 
 Each has a committed `.example` counterpart documenting its expected shape.
@@ -186,6 +186,8 @@ Each has a committed `.example` counterpart documenting its expected shape.
 | `pnpm test:integration` | Run the Vitest integration suite (`*.integration.test.ts`) in a `node` environment against a running local Supabase stack — requires `supabase start` first |
 | `pnpm e2e` | Run the Playwright E2E suite against a local production build |
 | `pnpm generate-routes` | Generate `src/routeTree.gen.ts` standalone (via `@tanstack/router-cli`), without running the dev server or a full build — mainly used in CI ahead of type-checking |
+| `pnpm verify` | Lint + type-check + coverage (`pnpm lint && pnpm exec tsc -b && pnpm coverage`). No Docker required — safe to run any time. |
+| `pnpm verify:full` | Everything in `pnpm verify`, plus the integration suite and E2E (`pnpm verify && pnpm test:integration && pnpm e2e`). Requires `supabase start` running and `.env.test.local` populated — see [Environment variables](#environment-variables). This is the full local approximation of what CI runs; use it before opening a PR. |
 
 ## Testing
 
@@ -197,20 +199,21 @@ This project uses test-driven development with full coverage required for every 
 - **Local Supabase integration testing** — implemented for both E2E and Vitest. The E2E job runs a full local Supabase stack via Docker (`supabase start`) and serves Edge Functions locally; the Vitest integration harness ([GLPDX-162](https://mallsoft.atlassian.net/browse/GLPDX-162)) runs against that same stack in a `node` environment, isolated from the fast jsdom unit pass. Integration tests follow the `*.integration.test.ts` convention and use `service_role`, `anon`, and authenticated client helpers to assert RLS behavior per role. Neither path ever touches production data. See [Continuous integration](#continuous-integration) for how this is wired in CI.
 - Cloudflare Turnstile's real widget silently refuses to render in headless/automated browsers — including with Cloudflare's own "always passes" dummy sitekey — so E2E tests stub Turnstile via `page.route()` interception rather than driving the real widget. The stub lives in `e2e/helpers/turnstile.ts` and is shared across specs.
 
-Run the full suite locally before opening a PR:
+**Before opening a PR:**
 
 ```bash
-pnpm lint
-pnpm exec tsc -b
-pnpm coverage
-pnpm e2e
+pnpm verify:full
 ```
+
+This runs lint, type-check, coverage, the integration suite, and E2E — the full local approximation of what CI runs. It requires `supabase start` to be running first, and `.env.test.local` to be populated (see [Environment variables](#environment-variables)).
+
+If you don't have Docker available, `pnpm verify` (lint + type-check + coverage, no Docker required) is a useful partial check, but it is **not** a substitute for `pnpm verify:full` before pushing — it does not run the integration suite or E2E, both of which are required in CI. A change that passes `pnpm verify` can still fail CI.
 
 ## Continuous integration
 
 GitHub Actions runs on every PR into `main` and every push to `main`:
 
-- **Lint, unit & integration tests** — installs dependencies, generates the TanStack Router route tree (`pnpm generate-routes` — see note below), then lints, type-checks, and runs the Vitest suite with coverage, uploading the coverage report as a build artifact. This job sets placeholder `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` env vars, since `main.tsx` transitively imports `src/lib/supabase.ts`.
+- **Lint, unit & integration tests** — installs dependencies, generates the TanStack Router route tree (`pnpm generate-routes` — see note below), then lints, type-checks, and runs the Vitest suite with coverage, uploading the coverage report as a build artifact. This job sets placeholder `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` env vars, since `main.tsx` transitively imports `src/lib/supabase.ts`.
 - **Playwright E2E** *(PRs only)* — installs dependencies, generates the route tree, then:
   1. Installs the Supabase CLI and runs `supabase start` to bring up the full local Docker stack
   2. Writes a CI-only `supabase/functions/.env` with a dummy Turnstile secret and serves Edge Functions locally

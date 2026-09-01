@@ -38,7 +38,8 @@ const mockMapInstance = {
   on: vi.fn(),
   remove: vi.fn(),
 };
-const MockMapConstructor = vi.fn(function () {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- param establishes the mock's call signature for type inference; body doesn't need to read it
+const MockMapConstructor = vi.fn(function (_options: Partial<maplibregl.MapOptions>) {
   return mockMapInstance;
 });
 

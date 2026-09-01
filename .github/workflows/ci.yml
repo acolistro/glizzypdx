@@ -107,10 +107,17 @@ jobs:
 
       # Installs the standalone `supabase` CLI binary (Go, not npm) so we can
       # run a REAL local stack via Docker — same as `supabase start` locally.
+      #
+      # Pinned (GLPDX-179): `version: latest` let CI silently drift onto a
+      # newer CLI than local dev. Confirmed via local repro that CLI 2.116.0
+      # grants EXECUTE on delete_expired_opted_out_checkins() to anon/
+      # authenticated by default, where 2.109.0 (this pin) does not. Bump
+      # deliberately via the dependabot.yml PR, not by editing this back to
+      # `latest`.
       - name: Set up Supabase CLI
         uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.109.0
 
       # Starts Postgres + Auth (+ the rest) as Docker containers and applies
       # this repo's migrations. That is all the integration harness needs —
@@ -179,16 +186,13 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium firefox webkit
 
-      # Installs the `supabase` CLI binary onto the runner (separate from
-      # the JS ecosystem — this is a standalone Go binary, not an npm
-      # package), so we can spin up a REAL local Supabase stack (Postgres,
-      # Auth, Edge Functions runtime) via Docker, the same way local dev
-      # does with `supabase start`. Without this, the E2E build has no
       # backend to actually talk to.
+      #
+      # Pinned (GLPDX-179) — see integration job above for the full note.
       - name: Set up Supabase CLI
         uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.109.0
 
       # Starts the full local stack (Postgres + Auth + Storage + Edge
       # Functions runtime) as Docker containers, using this repo's

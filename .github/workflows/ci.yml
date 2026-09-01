@@ -105,7 +105,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-            # run a REAL local stack via Docker — same as `supabase start` locally.
+      # Installs the standalone `supabase` CLI binary (Go, not npm) so we can
+      # run a REAL local stack via Docker — same as `supabase start` locally.
       #
       # Pinned (GLPDX-179): `version: latest` let CI silently drift onto a
       # newer CLI than local dev. Confirmed via local repro that CLI 2.116.0

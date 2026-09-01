@@ -2,11 +2,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 import { createVendorInquiry } from "./create-vendor-inquiry.ts";
 import { verifyTurnstile } from "./verify-turnstile.ts";
 import type { VendorInquiryInput } from "./create-vendor-inquiry.ts";
-
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { CORS_HEADERS } from "../_shared/cors.ts";
 
 function statusCodeFor(outcome: string): number {
   switch (outcome) {

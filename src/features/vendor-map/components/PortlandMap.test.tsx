@@ -51,6 +51,25 @@ vi.mock('maplibre-gl', () => ({
   },
 }));
 
+// Mock config/env rather than letting the real eager-validating env.ts
+// load — see GLPDX-7's known bug pattern: a test file statically
+// importing PortlandMap.tsx transitively statically imports env.ts,
+// which validates ALL required vars (Supabase URL/key, Turnstile key)
+// at import time, not just the stadiaMapsApiKey this component actually
+// reads. That makes the test depend on real environment configuration
+// being present, which is exactly what stubbing/mocking env exists to
+// avoid — this failed in CI (missing VITE_TURNSTILE_SITE_KEY) despite
+// passing locally, where a real .env happened to have every var set.
+vi.mock('../../../config/env', () => ({
+  env: {
+    supabaseUrl: 'https://example.supabase.co',
+    supabasePublishableKey: 'test-publishable-key',
+    turnstileSiteKey: 'test-turnstile-site-key',
+    stadiaMapsApiKey: undefined,
+    analyticsDomain: undefined,
+  },
+}));
+
 describe('PortlandMap', () => {
   it('centers the map on Portland metro coordinates on initial render', () => {
     render(<PortlandMap />);

@@ -36,15 +36,20 @@
 import { Map } from './Map';
 import { env } from '../../../config/env';
 import { getDefaultStadiaStyleUrl } from '../lib/stadiaStyle';
-import { PORTLAND_METRO_CENTER, PORTLAND_METRO_DEFAULT_ZOOM } from '../lib/portlandMetro';
+import {
+  PORTLAND_METRO_CENTER,
+  PORTLAND_METRO_DEFAULT_ZOOM,
+  PORTLAND_METRO_BOUNDS,
+} from '../lib/portlandMetro';
 
 export function PortlandMap() {
   return (
     <Map
-      options={{
+        options={{
         style: getDefaultStadiaStyleUrl(env.stadiaMapsApiKey),
         center: PORTLAND_METRO_CENTER,
         zoom: PORTLAND_METRO_DEFAULT_ZOOM,
+        maxBounds: PORTLAND_METRO_BOUNDS,
       }}
     />
   );

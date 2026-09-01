@@ -115,7 +115,7 @@ jobs:
       # deliberately via the dependabot.yml PR, not by editing this back to
       # `latest`.
       - name: Set up Supabase CLI
-        uses: supabase/setup-cli@v1
+        uses: supabase/setup-cli@v3
         with:
           version: 2.109.0
 
@@ -190,7 +190,7 @@ jobs:
       #
       # Pinned (GLPDX-179) — see integration job above for the full note.
       - name: Set up Supabase CLI
-        uses: supabase/setup-cli@v1
+        uses: supabase/setup-cli@v3
         with:
           version: 2.109.0
 

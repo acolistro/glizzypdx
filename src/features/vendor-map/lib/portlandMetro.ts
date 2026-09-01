@@ -44,3 +44,36 @@ export const PORTLAND_METRO_CENTER: [number, number] = [-122.6765, 45.5188];
  * GLPDX-24's bounds are in place.
  */
 export const PORTLAND_METRO_DEFAULT_ZOOM = 12;
+
+/**
+ * Bounding box constraining map panning to the Portland metro area —
+ * used as MapLibre's `maxBounds` (see PortlandMap.tsx, GLPDX-24).
+ *
+ * Deliberately large and inclusive per Alex's direction (2026-09-01):
+ * not just inner Portland, but the full commuter/dining catchment area —
+ * anyone who's plausibly "in Portland for dinner or work" should stay
+ * within bounds. Covers:
+ *   - West to Hillsboro/Forest Grove (tech corridor commuters)
+ *   - East to Gresham/Troutdale
+ *   - South to Wilsonville/Oregon City
+ *   - North well into Vancouver WA/Salmon Creek (heavy cross-river traffic)
+ *
+ * Format: [[SW lng, SW lat], [NE lng, NE lat]] — MapLibre's expected
+ * LngLatBoundsLike tuple-of-corners shape. Same [lng, lat] order per
+ * corner as PORTLAND_METRO_CENTER above, for the same reason (MapLibre/
+ * GeoJSON convention, opposite of the more common [lat, lng]).
+ *
+ * This is an axis-aligned rectangle, not a shape hugging the metro's
+ * actual geography — maxBounds only supports rectangles. A box this
+ * size will include some rural/farmland area near its edges (e.g. parts
+ * of the Gorge, land past Forest Grove) that isn't really "Portland
+ * commuter/diner" territory. That's accepted as an inherent tradeoff of
+ * being inclusive rather than tight — see GLPDX-24's Jira description.
+ *
+ * Shared with GLPDX-25, which verifies the runtime pan-restriction
+ * behavior this bounding box produces.
+ */
+export const PORTLAND_METRO_BOUNDS: [[number, number], [number, number]] = [
+  [-123.25, 45.2], // SW corner
+  [-122.25, 45.75], // NE corner
+];

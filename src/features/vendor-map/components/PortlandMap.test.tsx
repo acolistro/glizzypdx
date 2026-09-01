@@ -1,22 +1,28 @@
 // src/features/vendor-map/components/PortlandMap.test.tsx
 //
-// Paired test file for GLPDX-21 (ticket GLPDX-184). Same mocking approach
-// as GLPDX-182/183: maplibre-gl needs real WebGL, unavailable in Vitest's
-// jsdom, so we mock the library entirely and assert on how it was
-// *called* rather than rendering a real map. Real WebGL rendering is
-// deferred to Playwright E2E (GLPDX-26).
+// Paired test file for GLPDX-21 (ticket GLPDX-184), extended by GLPDX-24
+// (default map bounds). Same mocking approach as GLPDX-182/183:
+// maplibre-gl needs real WebGL, unavailable in Vitest's jsdom, so we mock
+// the library entirely and assert on how it was *called* rather than
+// rendering a real map. Real WebGL rendering is deferred to Playwright
+// E2E (GLPDX-26).
 //
-// What this file verifies (per GLPDX-184's Jira description):
-//   1. The map is centered on Portland metro coordinates on initial render
-//   2. The real Stadia style is used (not GLPDX-22's blank default style)
+// What this file verifies:
+//   1. The map is centered on Portland metro coordinates on initial render (GLPDX-21)
+//   2. The real Stadia style is used (not GLPDX-22's blank default style) (GLPDX-21)
 //   3. PortlandMap composes GLPDX-22's <Map> component rather than
-//      reimplementing map instantiation itself
+//      reimplementing map instantiation itself (GLPDX-21)
+//   4. Panning is constrained to the Portland metro bounding box (GLPDX-24)
 
 import { describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/react';
 import type maplibregl from 'maplibre-gl';
 import { PortlandMap } from './PortlandMap';
-import { PORTLAND_METRO_CENTER, PORTLAND_METRO_DEFAULT_ZOOM } from '../lib/portlandMetro';
+import {
+  PORTLAND_METRO_CENTER,
+  PORTLAND_METRO_DEFAULT_ZOOM,
+  PORTLAND_METRO_BOUNDS,
+} from '../lib/portlandMetro';
 import { getDefaultStadiaStyleUrl } from '../lib/stadiaStyle';
 
 // Mock maplibre-gl the same way GLPDX-182's useMapLibre.test.tsx does:
@@ -107,5 +113,22 @@ describe('PortlandMap', () => {
     // is composing <Map> rather than rendering its own container div and
     // reimplementing map instantiation.
     expect(getByTestId('map-container')).toBeInTheDocument();
+  });
+
+  it('constrains panning to the Portland metro bounding box (GLPDX-24)', () => {
+    render(<PortlandMap />);
+
+    // maxBounds is MapLibre's built-in mechanism for constraining pan —
+    // see GLPDX-24's Jira description. PORTLAND_METRO_BOUNDS is a large,
+    // inclusive box covering not just inner Portland but the commuter/
+    // dining catchment area: west to Hillsboro, east to Gresham/
+    // Troutdale, south to Wilsonville/Oregon City, north well into
+    // Vancouver WA. Shared with GLPDX-25, which verifies the runtime
+    // pan-restriction behavior this produces.
+    expect(MockMapConstructor).toHaveBeenCalledWith(
+      expect.objectContaining({
+        maxBounds: PORTLAND_METRO_BOUNDS,
+      })
+    );
   });
 });

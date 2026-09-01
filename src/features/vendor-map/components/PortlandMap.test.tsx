@@ -38,7 +38,7 @@ const mockMapInstance = {
   on: vi.fn(),
   remove: vi.fn(),
 };
-const MockMapConstructor = vi.fn(function (_options: Partial<maplibregl.MapOptions>) {
+const MockMapConstructor = vi.fn(function () {
   return mockMapInstance;
 });
 

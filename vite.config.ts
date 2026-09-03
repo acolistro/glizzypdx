@@ -95,6 +95,12 @@ export default defineConfig({
         "src/test/integration/**",
         // Type-only declaration files have no runtime behavior to cover.
         "**/*.d.ts",
+        // GLPDX-186 — generated from the local Postgres schema via
+        // `pnpm gen:types`; no hand-written branching logic to cover,
+        // same reasoning as the *.d.ts exclusion above. Do not exclude
+        // real hand-written Supabase-adjacent files this way (e.g.
+        // cors.ts) -- only auto-generated, logic-free output belongs here.
+        "src/types/database.ts",
         // CSS Modules always report 0% under the v8 provider -- this is
         // a known false negative of the tool, not missing test coverage.
         "**/*.css",

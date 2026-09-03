@@ -20,7 +20,8 @@
     "e2e": "playwright test",
     "generate-routes": "tsr generate",
     "verify": "pnpm lint && pnpm exec tsc -b && pnpm coverage",
-    "verify:full": "pnpm verify && pnpm test:integration && pnpm e2e"
+    "verify:full": "pnpm verify && pnpm test:integration && pnpm e2e",
+    "gen:types": "mkdir -p src/types && supabase gen types typescript --local > src/types/database.ts"
   },
   "dependencies": {
     "@marsidev/react-turnstile": "^1.5.3",

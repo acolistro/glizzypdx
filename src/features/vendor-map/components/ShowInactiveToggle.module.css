@@ -1,0 +1,64 @@
+/**
+ * ShowInactiveToggle.module.css — GLPDX-33
+ * ============================================================
+ * WHAT THIS STYLES:
+ * The "show inactive" toggle, meant to float above the map canvas
+ * as a standalone control (not part of a control bar — see GLPDX-33's
+ * Jira description for the YAGNI reasoning behind that decision).
+ *
+ * WHERE THIS GETS PLACED:
+ * This uses `position: absolute`, which positions it relative to the
+ * nearest ancestor that has `position: relative` (or another
+ * positioning context) set on it. This component does NOT set that
+ * ancestor itself — it's a contract with whatever parent renders it
+ * (VendorMapView, GLPDX-33's next piece): that parent's wrapping
+ * element around the map needs `position: relative` for this toggle
+ * to end up positioned correctly over the map rather than the whole
+ * page. If this ever looks like it's floating in the wrong place, the
+ * parent's positioning context is the first thing to check.
+ *
+ * VISUAL DIRECTION:
+ * Deliberately a plain bordered box with a real checkbox, not a custom
+ * iOS-style sliding "pill" switch. The Late 90s Primary Colors design
+ * direction (see project rules) favors bold, visible borders and sharp
+ * corners over soft modern UI chrome — a slick pill switch would clash
+ * with that aesthetic and would also need a lot of extra pseudo-element
+ * work to fake the sliding "thumb." A clearly bordered checkbox both
+ * fits the visual direction and stays simpler to keep accessible.
+ * ============================================================
+ */
+
+.toggle {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+
+  /* See tokens.css's Z-INDEX SCALE comment: this sits in the gap
+     between --z-map (0) and --z-sidebar (10), specifically because a
+     floating map control isn't semantically "the sidebar." */
+  z-index: var(--z-map-control);
+
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+
+  padding: var(--space-2) var(--space-3);
+
+  background-color: var(--color-white);
+  border: var(--border-thin) solid var(--color-blue);
+  border-radius: var(--radius-sm);
+
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--color-black);
+
+  cursor: pointer;
+}
+
+.toggle input[type='checkbox'] {
+  /* Slightly larger than the browser default so this is easier to tap
+     accurately on a phone — GLPDX-33's map is a mobile-first UI. */
+  width: var(--space-4);
+  height: var(--space-4);
+  cursor: pointer;
+}

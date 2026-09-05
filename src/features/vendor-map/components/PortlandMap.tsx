@@ -18,21 +18,24 @@
 // conditional logic here; getDefaultStadiaStyleUrl() already handles
 // omitting the key when it's undefined.
 //
-// Where its output goes: rendered UI — this is meant to be the map users
-// actually see. Nothing yet reads a `map` instance back out of this
-// component (no onLoad passed to <Map>) because nothing downstream needs
-// it yet; GLPDX-33 (vendor pins) will be the first ticket to need that,
-// via <Map>'s onLoad prop.
+// Where its output goes: rendered UI — this is the map users actually
+// see. As of GLPDX-33, it also accepts an onLoad callback, forwarded
+// straight through to <Map>, so a parent component can get a handle on
+// the real maplibregl.Map instance once MapLibre fires its 'load'
+// event — needed by GLPDX-33's vendor-pin rendering, which adds
+// markers onto this map imperatively once it's ready.
 //
-// Non-obvious pattern: no props on this component (yet). Everything it
-// needs — the Stadia key, the Portland center/zoom — comes from module
-// imports (env, constants), not from a parent component passing them
-// down. That's intentional: PortlandMap IS "the Portland map," not a
-// generic reusable map that happens to default to Portland. If a future
-// ticket needs a configurable center (e.g. an admin preview at a
-// different location), that's a deliberate prop addition to make then,
-// not something to speculatively add now (YAGNI).
+// Non-obvious pattern: PortlandMap now takes exactly one optional prop
+// (onLoad), still resolutely NOT a general-purpose configurable map —
+// the Stadia key, Portland center/zoom, and bounds still all come from
+// module imports (env, constants), not from parent-passed props. Adding
+// onLoad is a deliberate, minimal prop addition to satisfy a real
+// consumer (GLPDX-33), not a step toward making this component
+// generic — see the original GLPDX-21 comment on this file for why
+// that distinction matters (YAGNI: add configurability when a real
+// need shows up, not speculatively).
 
+import type maplibregl from 'maplibre-gl';
 import { Map } from './Map';
 import { env } from '../../../config/env';
 import { getDefaultStadiaStyleUrl } from '../lib/stadiaStyle';
@@ -42,15 +45,28 @@ import {
   PORTLAND_METRO_BOUNDS,
 } from '../lib/portlandMetro';
 
-export function PortlandMap() {
+export interface PortlandMapProps {
+  /**
+   * Called once MapLibre fires its 'load' event, with the real
+   * maplibregl.Map instance. Optional — most renders of PortlandMap
+   * (e.g. anywhere that doesn't need to add markers or otherwise talk
+   * to the map directly) can omit this entirely. Forwarded verbatim to
+   * <Map>'s own onLoad prop (see components/Map.tsx), which is where
+   * the actual event subscription lives.
+   */
+  onLoad?: (map: maplibregl.Map) => void;
+}
+
+export function PortlandMap({ onLoad }: PortlandMapProps) {
   return (
     <Map
-        options={{
+      options={{
         style: getDefaultStadiaStyleUrl(env.stadiaMapsApiKey),
         center: PORTLAND_METRO_CENTER,
         zoom: PORTLAND_METRO_DEFAULT_ZOOM,
         maxBounds: PORTLAND_METRO_BOUNDS,
       }}
+      onLoad={onLoad}
     />
   );
 }

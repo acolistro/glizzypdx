@@ -145,6 +145,8 @@ export default defineConfig({
         // logic of its own to test; excluded as an accepted, documented
         // gap rather than a silent one.
         "src/main.tsx",
+        'src/types/database.ts', // generated, GLPDX-186
+        'supabase/functions/_shared/cors.ts', // hand-written, deliberately excluded — see 2026-09-04 decision
       ],
       thresholds: {
         lines: 80,

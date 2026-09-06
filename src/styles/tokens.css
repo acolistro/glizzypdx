@@ -274,6 +274,13 @@
    * numbers instead of implicit shadow-based stacking.
    */
   --z-map: 0;        /* MapLibre canvas — the base layer everything else sits above */
+  --z-map-control: 5;    /* standalone floating controls sitting above the map canvas but
+                             not "the sidebar" semantically (e.g. GLPDX-33's "show inactive"
+                             toggle) — kept distinct from --z-sidebar so reusing that token
+                             for a non-sidebar element doesn't become a semantic tangle if a
+                             real sidebar and this control are ever on screen together. Sits
+                             in the gap between --z-map and --z-sidebar by design (see the
+                             note on this scale's large numeric gaps, above). */
   --z-sidebar: 10;   /* vendor list sidebar, floating over the map */
   --z-modal: 100;    /* vendor detail modals, confirmation dialogs */
   --z-toast: 1000;   /* toast notifications — always visible above any modal */

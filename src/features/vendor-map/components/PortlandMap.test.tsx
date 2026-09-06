@@ -1,11 +1,12 @@
 // src/features/vendor-map/components/PortlandMap.test.tsx
 //
 // Paired test file for GLPDX-21 (ticket GLPDX-184), extended by GLPDX-24
-// (default map bounds). Same mocking approach as GLPDX-182/183:
-// maplibre-gl needs real WebGL, unavailable in Vitest's jsdom, so we mock
-// the library entirely and assert on how it was *called* rather than
-// rendering a real map. Real WebGL rendering is deferred to Playwright
-// E2E (GLPDX-26).
+// (default map bounds) and GLPDX-33 (onLoad passthrough).
+//
+// Same mocking approach as GLPDX-182/183: maplibre-gl needs real WebGL,
+// unavailable in Vitest's jsdom, so we mock the library entirely and
+// assert on how it was *called* rather than rendering a real map. Real
+// WebGL rendering is deferred to Playwright E2E (GLPDX-26).
 //
 // What this file verifies:
 //   1. The map is centered on Portland metro coordinates on initial render (GLPDX-21)
@@ -13,8 +14,11 @@
 //   3. PortlandMap composes GLPDX-22's <Map> component rather than
 //      reimplementing map instantiation itself (GLPDX-21)
 //   4. Panning is constrained to the Portland metro bounding box (GLPDX-24)
+//   5. PortlandMap forwards an onLoad prop through to <Map>, so a
+//      consumer (GLPDX-33's vendor-pin rendering) can get a handle on
+//      the real maplibregl.Map instance once it's ready (GLPDX-33)
 
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import type maplibregl from 'maplibre-gl';
 import { PortlandMap } from './PortlandMap';
@@ -77,6 +81,19 @@ vi.mock('../../../config/env', () => ({
 }));
 
 describe('PortlandMap', () => {
+  // NEW (GLPDX-33): mockMapInstance is a single shared object returned
+  // by every call to MockMapConstructor across every test in this file
+  // — its `on`/`remove` spies were never being reset between tests
+  // before now. That was harmless while no test inspected `on.mock.calls`,
+  // but the new onLoad-passthrough test below needs to find exactly one
+  // 'load' registration from its own render, not an accumulation of
+  // registrations left over from earlier tests in this file.
+  beforeEach(() => {
+    MockMapConstructor.mockClear();
+    mockMapInstance.on.mockClear();
+    mockMapInstance.remove.mockClear();
+  });
+
   it('centers the map on Portland metro coordinates on initial render', () => {
     render(<PortlandMap />);
 
@@ -130,5 +147,40 @@ describe('PortlandMap', () => {
         maxBounds: PORTLAND_METRO_BOUNDS,
       })
     );
+  });
+
+  // NEW (GLPDX-33): PortlandMap currently accepts no props at all — its
+  // own module comment (as of GLPDX-21) explicitly says nothing
+  // downstream needs the map instance yet. GLPDX-33 is that first
+  // consumer: vendor-pin rendering needs a real maplibregl.Map to add
+  // markers to. This test currently fails because PortlandMap has no
+  // onLoad prop to forward — that's the point; implementation comes
+  // after this is confirmed red for the right reason (a missing prop,
+  // not a typo or setup mistake).
+  it('forwards an onLoad prop through to the underlying Map, so a consumer can get the real map instance (GLPDX-33)', () => {
+    const onLoad = vi.fn();
+    render(<PortlandMap onLoad={onLoad} />);
+
+    // useMapLibre (inside <Map>) registers its 'load' handler via
+    // map.on('load', ...). We capture that handler here and invoke it
+    // ourselves, mirroring how Map.test.tsx's MockMap.__trigger()
+    // simulates MapLibre firing the real 'load' event — PortlandMap.test.tsx
+    // mocks the maplibre-gl library directly (not the <Map> component),
+    // so there's no __trigger helper available here; reading the handler
+    // straight off the spy's recorded calls is the equivalent for this
+    // file's mocking style.
+    const loadRegistration = mockMapInstance.on.mock.calls.find(
+      ([eventName]) => eventName === 'load'
+    );
+    expect(loadRegistration).toBeDefined();
+
+    const loadHandler = loadRegistration?.[1] as () => void;
+    loadHandler();
+
+    // onLoad should receive the real map instance (mockMapInstance here),
+    // not be called with no arguments or with PortlandMap's own props —
+    // this is what lets GLPDX-33's vendor-pin components add markers to
+    // the actual map.
+    expect(onLoad).toHaveBeenCalledWith(mockMapInstance);
   });
 });

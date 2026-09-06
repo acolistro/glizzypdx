@@ -271,7 +271,16 @@ const REQUIRED_TOKENS = {
     "--border-left-accent",
   ],
   radius: ["--radius-none", "--radius-sm", "--radius-md"],
-  zIndex: ["--z-map", "--z-sidebar", "--z-modal", "--z-toast"],
+  // GLPDX-33: added --z-map-control, sitting between --z-map and
+  // --z-sidebar. This is for standalone floating controls that sit
+  // above the map canvas but aren't "the sidebar" semantically (e.g.
+  // the "show inactive" toggle) — reusing --z-sidebar for a
+  // non-sidebar element would be a semantic misuse that could bite
+  // later if a real sidebar and this control are ever on screen at
+  // the same time. The large gap in the existing scale (0, 10, 100,
+  // 1000) exists specifically so a new layer can slot in between two
+  // existing ones without renumbering — this is exactly that case.
+  zIndex: ["--z-map", "--z-map-control", "--z-sidebar", "--z-modal", "--z-toast"],
   transition: ["--transition-fast", "--transition-base"],
 } as const;
 

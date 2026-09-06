@@ -1,8 +1,4 @@
 {
-  // This config governs everything under src/ — your actual app code.
-  // It's split from tsconfig.node.json because the app runs in the browser
-  // (needs "DOM" types) while config files run in Node (needs "Node" types).
-  // Vite's default scaffold does this split; we're following the same convention.
   "compilerOptions": {
     "target": "ES2022",
     "useDefineForClassFields": true,
@@ -10,8 +6,6 @@
     "module": "ESNext",
     "skipLibCheck": true,
 
-    /* Bundler mode — tells TS that Vite (not tsc) handles the actual module
-       resolution and transpilation. TS is only used here for type-checking. */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
@@ -19,28 +13,27 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
-    /* Strict type-checking. We do NOT use "any" anywhere in this project
-       (see project rules), so strict mode is non-negotiable — it's what
-       catches the mistakes "any" would otherwise hide. */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
 
-    /* Path alias: lets you write `import { supabase } from "@/lib/supabase"`
-       instead of `import { supabase } from "../../../lib/supabase"`.
-       Mirrored in vite.config.ts (resolve.alias) — both must stay in sync
-       or the alias will work in the editor but fail at build time.
-       No baseUrl needed: with moduleResolution "bundler", path values
-       resolve relative to this tsconfig file's own location by default.
-       (baseUrl is deprecated as of TypeScript 6 and would stop working
-       in TS 7 — omitting it entirely is the permanent fix, not a
-       workaround.) */
+    /* TS6 changed the default for this option: omitting "types" used to
+       mean "auto-include every @types/* package," but as of TS6 it now
+       means "include nothing" unless explicitly listed here. geojson is
+       consumed as an ambient global (GeoJSON.Feature, etc., via its
+       `export as namespace GeoJSON` declaration) in VendorMapView.tsx —
+       without this entry, `pnpm tsc --build` can't find that namespace
+       even though the package is correctly installed. Add any future
+       package here too if it's meant to be used as a bare global type
+       rather than imported explicitly. */
+    "types": ["geojson"],
+
     "paths": {
       "@/*": ["./src/*"]
     }
   },
   "include": ["src"],
-"exclude": ["src/test/integration", "src/styles/tokens.test.ts"]
+  "exclude": ["src/test/integration", "src/styles/tokens.test.ts"]
 }

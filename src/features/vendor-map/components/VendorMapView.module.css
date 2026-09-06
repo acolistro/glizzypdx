@@ -1,0 +1,24 @@
+/**
+ * VendorMapView.module.css — GLPDX-33
+ * ============================================================
+ * position: relative here is not decorative — it's the positioning
+ * context ShowInactiveToggle's own CSS (position: absolute) depends on.
+ * See ShowInactiveToggle.module.css's own comment: without a positioned
+ * ancestor somewhere between it and the page root, that toggle would
+ * position itself relative to the whole page instead of floating over
+ * this map.
+ *
+ * width/height: 100% assumes a parent element gives this container
+ * real dimensions to fill — this component doesn't set its own
+ * viewport-level sizing. Final page-level sizing (how this looks once
+ * actually mounted on a real route) is GLPDX-188's job, not this
+ * ticket's — GLPDX-33 stays scoped to the component itself, verified
+ * via tests, not to how it looks once placed on the home route.
+ * ============================================================
+ */
+
+.container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
